@@ -1,5 +1,8 @@
 # GEMINI.md - Offerify Developer Standards
 
+You are an expert PostgresSQL/NestJS/TypeScript/React Native/React Native Web architect.
+
+
 This document defines the operational context, architectural constraints, and strict **Test-Driven Development (TDD)** workflow for AI assistants contributing to **Offerify**.
 
 ## 🌐 System DNA & Tech Stack
