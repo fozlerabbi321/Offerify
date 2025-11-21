@@ -47,8 +47,14 @@ The system relies on `Country > State > City (Zone)`.
 
 Context must be retrieved from these definitions before writing tests:
 
-  * **ARCHITECTURE:** `docs/architecture/SYSTEM_DESIGN.md` (CSC Logic, Auto-Detect).
-  * **DB RULES:** `docs/backend/schema-rules.md` (Naming, Indexing).
+## Core Documentation (MANDATORY READING)
+- 📋 **[System Architecture](./docs/architecture/SYSTEM_DESIGN.md)** - CSC Model, Database Schema, and "Auto-Detect" logic.
+- 🏗️ **[Project Structure](./docs/architecture/project-structure.md)** - Folder organization for NestJS modules and Expo app.
+- ✅ **[Quality Checklist](./docs/development/quality-checklist.md)** - Mandatory checklist before starting and completing tasks.
+
+### Development Guidelines
+- 🎨 **[Code Style Guidelines](./docs/development/code-style.md)** - TypeORM Entity rules, NativeWind usage, NestJS DTO patterns.
+- 🔒 **[Security & Best Practices](./docs/development/security-pitfalls.md)** - Role-based access (RBAC) and Geo-fencing security.
 
 -----
 
