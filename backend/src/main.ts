@@ -9,6 +9,8 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.setGlobalPrefix('api');
+
   // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Offerify API')

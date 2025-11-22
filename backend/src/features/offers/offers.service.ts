@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 
 @Injectable()
 export class OffersService {
@@ -48,5 +49,52 @@ export class OffersService {
         }
 
         return offerWithCity;
+    }
+
+    async findOne(id: string): Promise<Offer> {
+        const offer = await this.offerRepository.findOne({
+            where: { id },
+            relations: ['city', 'vendor'],
+        });
+
+        if (!offer) {
+            throw new NotFoundException(`Offer with ID ${id} not found`);
+        }
+
+        return offer;
+    }
+
+    async update(id: string, updateOfferDto: UpdateOfferDto): Promise<Offer> {
+        // Check if offer exists
+        const offer = await this.offerRepository.findOne({
+            where: { id },
+        });
+
+        if (!offer) {
+            throw new NotFoundException(`Offer with ID ${id} not found`);
+        }
+
+        // Update offer properties
+        Object.assign(offer, updateOfferDto);
+
+        // Save updated offer
+        await this.offerRepository.save(offer);
+
+        // Fetch with relations for response
+        return await this.findOne(id);
+    }
+
+    async remove(id: string): Promise<void> {
+        // Check if offer exists
+        const offer = await this.offerRepository.findOne({
+            where: { id },
+        });
+
+        if (!offer) {
+            throw new NotFoundException(`Offer with ID ${id} not found`);
+        }
+
+        // Delete the offer
+        await this.offerRepository.remove(offer);
     }
 }
