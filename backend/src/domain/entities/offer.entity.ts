@@ -10,6 +10,7 @@ import {
     ChildEntity,
 } from 'typeorm';
 import { VendorProfile } from './vendor-profile.entity';
+import { City } from './city.entity';
 
 export enum OfferType {
     DISCOUNT = 'discount',
@@ -41,6 +42,13 @@ export class Offer {
 
     @Column({ name: 'vendor_id' })
     vendorId: string;
+
+    @ManyToOne(() => City)
+    @JoinColumn({ name: 'city_id' })
+    city: City;
+
+    @Column({ name: 'city_id' })
+    cityId: number;
 
     @Column({ default: true })
     isActive: boolean;

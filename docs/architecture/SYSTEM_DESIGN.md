@@ -151,6 +151,38 @@ CREATE TABLE offer_redemptions (
 );
 ```
 
+#### **D. Multi-Branch Offer Creation**
+
+**Offer Creation Logic:** Offerify supports **Multi-Branch Brands** where a vendor can create offers for different zones (cities).
+
+- **Default Behavior:** If no `cityId` is provided when creating an offer, the system defaults to the vendor's **Operating Zone** (`vendor_profiles.city_id`).
+- **Override (Multi-Branch Support):** If a specific `cityId` is provided in the request payload, the offer will be created for that zone instead.
+- **Logic Implementation:**
+  ```typescript
+  const targetCityId = createOfferDto.cityId || vendor.cityId;
+  ```
+
+**Use Case Example:**
+- Vendor "Burger King" has an operating zone in Gulshan (city_id: 1).
+- They want to post a special offer for their Dhanmondi branch (city_id: 99).
+- Request includes `cityId: 99` → Offer is created for Dhanmondi.
+- Request without `cityId` → Offer is created for Gulshan (default operating zone).
+
+**Response Format:**
+The API response includes the populated `city` object to verify which zone the offer was posted to:
+```json
+{
+  "id": "offer-uuid",
+  "title": "50% Off Whopper",
+  "vendorId": "vendor-uuid",
+  "cityId": 99,
+  "city": {
+    "id": 99,
+    "name": "Dhanmondi"
+  }
+}
+```
+
 -----
 
 ## 5\. Core Logic & Algorithms
