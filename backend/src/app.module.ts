@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { databaseConfig } from './config/database.config';
 import { LocationModule } from './features/location/location.module';
+import { OffersModule } from './features/offers/offers.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { LocationModule } from './features/location/location.module';
       useFactory: databaseConfig,
     }),
     LocationModule,
+    OffersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

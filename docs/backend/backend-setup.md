@@ -77,7 +77,7 @@ Since we are **not** using Docker yet, ensure you have these installed locally:
     ```
 
       - **API:** http://localhost:3000
-      - **Swagger:** http://localhost:3000/api-docs
+      - **Swagger:** http://localhost:3000/offerify-api-docs
 
 -----
 
