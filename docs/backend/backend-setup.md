@@ -127,22 +127,53 @@ npm run migration:revert
 ```bash
 backend/
 ├── src/
-│   ├── config/              # TypeORM, Redis, & Typesense Config
-│   ├── modules/             # Domain Modules (Vertical Slice)
-│   │   ├── location/        # CSC Logic & PostGIS Queries
-│   │   │   ├── entities/    # City, State, Country
-│   │   │   └── location.service.ts
-│   │   ├── offers/          # Deals, Coupons, Vouchers
-│   │   │   ├── entities/    # Unified 'Offer' entity
-│   │   │   └── dto/         # CreateOfferDto
-│   │   ├── vendors/         # Vendor Profiles & Map Pins
-│   │   └── auth/            # JWT & Role Guards
-│   ├── common/              # Shared DTOs, Decorators, Enums
-│   ├── database/            # Seeds & Migration files
-│   └── main.ts              # Entry point (Fastify)
-├── test/                    # E2E Tests
-├── .env.example             # Environment Template
-└── package.json
+│   ├── config/              # Configuration files
+│   │   ├── database.config.ts
+│   │   ├── exact-naming.strategy.ts
+│   │   └── migration.service.ts  # Migration management
+│   ├── domain/              # Domain layer
+│   │   ├── entities/        # Domain entities
+│   │   └── interfaces/      # Repository interfaces
+│   ├── features/            # Feature modules (vertical slices)
+│   │   └── users/           # User feature
+│   │       ├── dto/         # Data transfer objects
+│   │       ├── users.controller.ts
+│   │       ├── users.service.ts
+│   │       └── users.module.ts
+│   ├── infra/               # Infrastructure layer
+│   │   └── database/
+│   │       └── repositories/ # Repository implementations
+│   ├── migrations/          # Database migrations
+│   │   └── 1755103825035-InitialSchema.ts
+│   ├── common/              # Shared resources
+│   │   ├── filters/
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   └── pipes/
+│   ├── app.module.ts        # Root module
+│   └── main.ts              # Application entry point (Fastify)
+├── tests/                   # Test files (organized by type)
+│   ├── unit/                # Unit tests
+│   │   ├── app/
+│   │   │   └── app.controller.spec.ts
+│   │   ├── users/
+│   │   │   ├── users.controller.spec.ts
+│   │   │   └── users.service.spec.ts
+│   │   └── jest-unit.json   # Unit test configuration
+│   └── e2e/                 # End-to-end tests
+│       ├── app/
+│       │   └── app.e2e-spec.ts
+│       ├── users/
+│       │   └── users.e2e-spec.ts
+│       └── jest-e2e.json    # E2E test configuration
+├── .env.example             # Environment variables template
+├── .prettierrc              # Prettier configuration (no semicolons)
+├── eslint.config.mjs        # ESLint configuration
+├── docker-compose.yml       # Docker composition
+├── Dockerfile.dev           # Development Docker image
+├── package.json
+├── typeorm.config.ts        # TypeORM CLI configuration
+└── tsconfig.json
 ```
 
 -----
