@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { OffersService } from './offers.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
@@ -15,6 +15,13 @@ export class OffersController {
     @ApiResponse({ status: 400, description: 'Invalid input' })
     async createOffer(@Body() createOfferDto: CreateOfferDto) {
         return this.offersService.createOffer(createOfferDto);
+    }
+
+    @Get()
+    @ApiOperation({ summary: 'Get offers (Smart Feed)' })
+    @ApiResponse({ status: 200, description: 'List of offers' })
+    async findAll(@Query('cityId') cityId: number) {
+        return this.offersService.findAll(cityId);
     }
 
     @Get(':id')

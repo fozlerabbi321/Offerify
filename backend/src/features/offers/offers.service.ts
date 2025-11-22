@@ -51,6 +51,18 @@ export class OffersService {
         return offerWithCity;
     }
 
+    async findAll(cityId?: number): Promise<Offer[]> {
+        const where: any = { isActive: true };
+        if (cityId) {
+            where.cityId = cityId;
+        }
+        return this.offerRepository.find({
+            where,
+            relations: ['city', 'vendor'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+
     async findOne(id: string): Promise<Offer> {
         const offer = await this.offerRepository.findOne({
             where: { id },
