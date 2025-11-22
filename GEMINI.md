@@ -59,6 +59,8 @@ Context must be retrieved from these definitions before writing tests:
 - 🎨 **[Code Style Guidelines](./docs/development/code-style.md)** - TypeORM Entity rules, NativeWind usage, NestJS DTO patterns.
 - 🔒 **[Security & Best Practices](./docs/development/security-pitfalls.md)** - Role-based access (RBAC) and Geo-fencing security.
 
+### Specialized Documentation
+- 🏗️ **[Backend Documentation](./docs/backend/)** - Backend setup, seeding, startup procedures
 -----
 
 ## 🛠️ TDD Development Lifecycle
