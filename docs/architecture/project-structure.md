@@ -9,13 +9,13 @@ This document outlines the high-level directory structure and technology stack f
 offerify/
 ├── backend/                  # NestJS API (Geo-aware Deal Engine)
 │   ├── src/                  # Source code
-│   │   ├── features/         # Feature modules (location, offers, vendors, etc.)
-│   │   ├── common/           # Shared DTOs, decorators, and guards
 │   │   ├── config/           # Environment (Dotenv) & Database config
+│   │   ├── database/         # Seeds
 │   │   ├── domain/           # TypeORM Entities & Interfaces (CSC Model)
-│   │   └── infra/            # Infrastructure (PostGIS, Typesense, Redis)
+│   │   ├── features/         # Feature modules (location, offers, vendors, etc.)
+│   │   └── migrations/       # Database migrations
 │   ├── tests/                # Unit (TDD) and E2E tests
-│   └── scripts/              # Seeding and migration scripts
+│   └── scripts/              # Utility scripts
 ├── frontend/                 # Unified Expo Super App (Customer + Vendor + Admin)
 │   ├── app/                  # Expo Router (Role-Based Navigation)
 │   │   ├── (auth)/           # Login, Register, Forgot Password (Shared)

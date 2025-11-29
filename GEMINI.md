@@ -2,7 +2,6 @@
 
 You are an expert PostgresSQL/NestJS/TypeScript/React Native/React Native Web architect.
 
-
 This document defines the operational context, architectural constraints, and strict **Test-Driven Development (TDD)** workflow for AI assistants contributing to **Offerify**.
 
 ## 🌐 System DNA & Tech Stack
@@ -17,6 +16,7 @@ Offerify is a **hyper-local** deal discovery platform built on a **Global CSC (C
 | **Frontend** | **Expo (React Native)** | SDK 53. **NativeWind** for styling. |
 | **Testing** | **Jest** & **RNTL** | React Native Testing Library for Frontend. |
 | **Search** | **Typesense** | No SQL `LIKE` queries for search. |
+| **Caching** | **Redis** | Caches Zone Feeds and Session data. |
 
 -----
 
@@ -44,13 +44,51 @@ The system relies on `Country > State > City (Zone)`.
   * **Differentiation:** Use the `type` Enum (`discount`, `coupon`, `voucher`).
   * **UUIDs:** Use `uuid` for logic entities, `int` for static Location data.
 
+### 4\. Strict API Standards 📡
+
+  * **Global Prefix:** All routes must start with `/api`.
+  * **Response Format:** All responses must follow `{ data, meta, message }`.
+  * **Validation:** Strict `class-validator` DTOs for all inputs.
+
+-----
+
+## 📂 Directory Structure
+
+### Backend (`backend/`)
+```
+src/
+├── app.module.ts          # Root Module
+├── main.ts                # Entry Point (Fastify Adapter)
+├── config/                # Environment Configuration
+├── database/              # Seeds
+├── domain/                # TypeORM Entities & Interfaces
+├── features/              # Feature Modules (Location, Offers, etc.)
+│   ├── [feature-name]/
+│   │   ├── dto/           # Input/Output DTOs
+│   │   ├── [name].controller.ts
+│   │   ├── [name].service.ts
+│   │   └── [name].module.ts
+└── migrations/            # Database Migrations
+```
+
+### Documentation (`docs/`)
+```
+docs/
+├── architecture/          # System Design, Schema, Project Structure
+├── backend/               # Setup, Guides
+├── development/           # Code Style, Quality Checklist, Security
+├── features/              # Feature-specific specs
+├── API_STRUCTURE.md       # Standard API Response & Error Handling
+└── DEPLOYMENT.md          # Deployment & Docker Guides
+```
+
 -----
 
 ## 📚 Knowledge Base Index
 
 Context must be retrieved from these definitions before writing tests:
 
-## Core Documentation (MANDATORY READING)
+### Core Documentation (MANDATORY READING)
 - 📋 **[System Architecture](./docs/architecture/SYSTEM_DESIGN.md)** - CSC Model, Database Schema, and "Auto-Detect" logic.
 - 🏗️ **[Project Structure](./docs/architecture/project-structure.md)** - Folder organization for NestJS modules and Expo app.
 - ✅ **[Quality Checklist](./docs/development/quality-checklist.md)** - Mandatory checklist before starting and completing tasks.
@@ -58,9 +96,12 @@ Context must be retrieved from these definitions before writing tests:
 ### Development Guidelines
 - 🎨 **[Code Style Guidelines](./docs/development/code-style.md)** - TypeORM Entity rules, NativeWind usage, NestJS DTO patterns.
 - 🔒 **[Security & Best Practices](./docs/development/security-pitfalls.md)** - Role-based access (RBAC) and Geo-fencing security.
+- 📡 **[API Structure](./docs/API_STRUCTURE.md)** - Standard response formats and error handling.
 
 ### Specialized Documentation
 - 🏗️ **[Backend Documentation](./docs/backend/)** - Backend setup, seeding, startup procedures
+- 🚀 **[Deployment Guide](./docs/DEPLOYMENT.md)** - Docker and deployment instructions.
+
 -----
 
 ## 🛠️ TDD Development Lifecycle
