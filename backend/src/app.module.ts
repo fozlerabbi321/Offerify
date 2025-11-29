@@ -9,6 +9,9 @@ import { databaseConfig } from './config/database.config';
 import { LocationModule } from './features/location/location.module';
 import { OffersModule } from './features/offers/offers.module';
 import { AuthModule } from './features/auth/auth.module';
+import { VendorsModule } from './features/vendors/vendors.module';
+import { RedemptionsModule } from './features/redemptions/redemptions.module';
+import { EngagementModule } from './features/engagement/engagement.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -23,6 +26,9 @@ import { ConfigService } from '@nestjs/config';
     LocationModule,
     OffersModule,
     AuthModule,
+    VendorsModule,
+    RedemptionsModule,
+    EngagementModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

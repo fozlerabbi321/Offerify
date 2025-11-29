@@ -5,8 +5,12 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToOne,
+    OneToMany,
 } from 'typeorm';
 import { VendorProfile } from './vendor-profile.entity';
+import { Favorite } from './favorite.entity';
+import { Review } from './review.entity';
+import { Exclude } from 'class-transformer';
 
 export enum UserRole {
     CUSTOMER = 'customer',
@@ -23,6 +27,7 @@ export class User {
     email: string;
 
     @Column({ select: false })
+    @Exclude()
     passwordHash: string;
 
     @Column({
@@ -34,6 +39,12 @@ export class User {
 
     @OneToOne(() => VendorProfile, (vendor) => vendor.user, { nullable: true })
     vendorProfile: VendorProfile;
+
+    @OneToMany(() => Favorite, (favorite) => favorite.user)
+    favorites: Favorite[];
+
+    @OneToMany(() => Review, (review) => review.user)
+    reviews: Review[];
 
     @CreateDateColumn()
     createdAt: Date;

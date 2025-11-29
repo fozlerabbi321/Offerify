@@ -15,9 +15,7 @@ export class CreateOfferDto {
     @IsEnum(OfferType)
     type: OfferType;
 
-    @ApiProperty({ example: '0fd62dc5-b7aa-4d10-a0e2-d5b0f2ac1213' })
-    @IsUUID()
-    vendorId: string;
+
 
     @ApiPropertyOptional({
         example: 1,

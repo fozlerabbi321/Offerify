@@ -8,9 +8,12 @@ import {
     JoinColumn,
     TableInheritance,
     ChildEntity,
+    RelationId,
+    OneToMany,
 } from 'typeorm';
 import { VendorProfile } from './vendor-profile.entity';
 import { City } from './city.entity';
+import { Favorite } from './favorite.entity';
 
 export enum OfferType {
     DISCOUNT = 'discount',
@@ -40,14 +43,14 @@ export class Offer {
     @JoinColumn({ name: 'vendor_id' })
     vendor: VendorProfile;
 
-    @Column({ name: 'vendor_id' })
+    @RelationId((offer: Offer) => offer.vendor)
     vendorId: string;
 
     @ManyToOne(() => City)
     @JoinColumn({ name: 'city_id' })
     city: City;
 
-    @Column({ name: 'city_id' })
+    @RelationId((offer: Offer) => offer.city)
     cityId: number;
 
     @Column({ default: true })
@@ -58,6 +61,15 @@ export class Offer {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column({ type: 'int', default: 0, nullable: true })
+    voucherLimit: number;
+
+    @Column({ type: 'int', default: 0, nullable: true })
+    voucherClaimedCount: number;
+
+    @OneToMany(() => Favorite, (favorite) => favorite.offer)
+    favorites: Favorite[];
 }
 
 @ChildEntity(OfferType.DISCOUNT)

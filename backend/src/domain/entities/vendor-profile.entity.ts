@@ -9,11 +9,14 @@ import {
     ManyToOne,
     OneToMany,
     Index,
+    RelationId,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import type { Point } from 'geojson';
 import { User } from './user.entity';
 import { City } from './city.entity';
 import { Offer } from './offer.entity';
+import { Review } from './review.entity';
 
 @Entity('vendor_profiles')
 export class VendorProfile {
@@ -38,7 +41,8 @@ export class VendorProfile {
     @JoinColumn({ name: 'user_id' })
     user: User;
 
-    @Column({ name: 'user_id' })
+    @RelationId((profile: VendorProfile) => profile.user)
+    @Exclude()
     userId: string;
 
     @ManyToOne(() => City)
@@ -46,10 +50,23 @@ export class VendorProfile {
     city: City;
 
     @Column({ name: 'city_id' })
+    @Exclude()
     cityId: number;
 
     @OneToMany(() => Offer, (offer) => offer.vendor)
     offers: Offer[];
+
+    @OneToMany(() => Review, (review) => review.vendor)
+    reviews: Review[];
+
+    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0.00, name: 'rating_avg' })
+    ratingAvg: number;
+
+    @Column({ type: 'int', default: 0, name: 'review_count' })
+    reviewCount: number;
+
+    @Column({ type: 'int', default: 0, name: 'follower_count' })
+    followerCount: number;
 
     @CreateDateColumn()
     createdAt: Date;

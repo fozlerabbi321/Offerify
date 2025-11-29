@@ -1,7 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserRole } from '../../domain/user.entity';
+import { User, UserRole } from '../../domain/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -23,7 +23,7 @@ export class AuthService {
         const user = this.userRepository.create({
             email,
             passwordHash,
-            role: role || UserRole.USER,
+            role: role || UserRole.CUSTOMER,
         });
 
         try {
@@ -42,7 +42,10 @@ export class AuthService {
     }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.userRepository.findOne({ where: { email } });
+        const user = await this.userRepository.findOne({
+            where: { email },
+            select: ['id', 'email', 'passwordHash', 'role', 'createdAt', 'updatedAt'] // Explicitly select passwordHash
+        });
         if (user && await bcrypt.compare(pass, user.passwordHash)) {
             const { passwordHash, ...result } = user;
             return result;

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User, UserRole } from '../../domain/user.entity';
+import { User, UserRole } from '../../domain/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -53,7 +53,7 @@ describe('AuthService', () => {
                 id: 'uuid',
                 email: dto.email,
                 passwordHash: hashedPassword,
-                role: UserRole.USER,
+                role: UserRole.CUSTOMER,
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
@@ -74,7 +74,7 @@ describe('AuthService', () => {
             expect(mockUserRepository.create).toHaveBeenCalledWith({
                 email: dto.email,
                 passwordHash: hashedPassword,
-                role: UserRole.USER,
+                role: UserRole.CUSTOMER,
             });
             expect(mockUserRepository.save).toHaveBeenCalled();
             expect(mockJwtService.sign).toHaveBeenCalledWith({
@@ -89,14 +89,14 @@ describe('AuthService', () => {
         it('should return user without password if validation is successful', async () => {
             const email = 'test@example.com';
             const password = 'password123';
-            const user = { id: 'uuid', email, passwordHash: 'hashedPassword', role: UserRole.USER };
+            const user = { id: 'uuid', email, passwordHash: 'hashedPassword', role: UserRole.CUSTOMER };
 
             mockUserRepository.findOne.mockResolvedValue(user);
             (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
             const result = await service.validateUser(email, password);
 
-            expect(result).toEqual({ id: 'uuid', email, role: UserRole.USER });
+            expect(result).toEqual({ id: 'uuid', email, role: UserRole.CUSTOMER });
             expect(mockUserRepository.findOne).toHaveBeenCalledWith({ where: { email } });
         });
 
@@ -118,7 +118,7 @@ describe('AuthService', () => {
 
     describe('login', () => {
         it('should return access token and user', async () => {
-            const user = { id: 'uuid', email: 'test@example.com', role: UserRole.USER };
+            const user = { id: 'uuid', email: 'test@example.com', role: UserRole.CUSTOMER };
             const token = 'jwt_token';
             mockJwtService.sign.mockReturnValue(token);
 

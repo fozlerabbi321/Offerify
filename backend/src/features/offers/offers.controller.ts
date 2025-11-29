@@ -1,20 +1,27 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { OffersService } from './offers.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../../domain/entities/user.entity';
 
 @ApiTags('Offers')
+@ApiBearerAuth()
 @Controller('offers')
 export class OffersController {
     constructor(private readonly offersService: OffersService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.VENDOR)
     @ApiOperation({ summary: 'Create a new offer' })
     @ApiResponse({ status: 201, description: 'Offer created successfully' })
     @ApiResponse({ status: 400, description: 'Invalid input' })
-    async createOffer(@Body() createOfferDto: CreateOfferDto) {
-        return this.offersService.createOffer(createOfferDto);
+    async createOffer(@Body() createOfferDto: CreateOfferDto, @Request() req) {
+        return this.offersService.createOffer(req.user.userId, createOfferDto);
     }
 
     @Get()

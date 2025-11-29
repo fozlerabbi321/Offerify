@@ -15,24 +15,25 @@ export class OffersService {
         private readonly vendorRepository: Repository<VendorProfile>,
     ) { }
 
-    async createOffer(createOfferDto: CreateOfferDto): Promise<Offer> {
+    async createOffer(userId: string, createOfferDto: CreateOfferDto): Promise<Offer> {
         // Fetch vendor with city relation to get operating city
         const vendor = await this.vendorRepository.findOne({
-            where: { id: createOfferDto.vendorId },
+            where: { user: { id: userId } },
             relations: ['city'],
         });
 
         if (!vendor) {
-            throw new NotFoundException(`Vendor with ID ${createOfferDto.vendorId} not found`);
+            throw new NotFoundException(`Vendor profile not found for user ${userId}`);
         }
 
         // Multi-Branch Logic: Use provided cityId or fallback to vendor's operating city
         const targetCityId = createOfferDto.cityId || vendor.cityId;
 
-        // Create offer with the target city
+        // Create offer with the target city and vendor
         const offer = this.offerRepository.create({
             ...createOfferDto,
-            cityId: targetCityId,
+            city: { id: targetCityId } as any, // Assign relation reference
+            vendor: vendor, // Assign vendor entity
         });
 
         // Save the offer
@@ -54,7 +55,7 @@ export class OffersService {
     async findAll(cityId?: number): Promise<Offer[]> {
         const where: any = { isActive: true };
         if (cityId) {
-            where.cityId = cityId;
+            where.city = { id: cityId };
         }
         return this.offerRepository.find({
             where,

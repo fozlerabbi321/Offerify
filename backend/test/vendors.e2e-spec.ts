@@ -8,10 +8,8 @@ import { City } from './../src/domain/entities/city.entity';
 import { State } from './../src/domain/entities/state.entity';
 import { Country } from './../src/domain/entities/country.entity';
 import { User, UserRole } from './../src/domain/entities/user.entity';
-import { VendorProfile } from './../src/domain/entities/vendor-profile.entity';
-import { OfferType } from './../src/domain/entities/offer.entity';
 
-describe('OffersController (e2e)', () => {
+describe('VendorsController (e2e)', () => {
     let app: NestFastifyApplication;
     let dataSource: DataSource;
     let jwtService: JwtService;
@@ -51,78 +49,12 @@ describe('OffersController (e2e)', () => {
         }
     });
 
-    it('POST /api/offers (Create Offer)', async () => {
-        // Seed data
+    it('POST /api/vendors (Create Profile)', async () => {
+        // Seed Location
         const countryRepo = dataSource.getRepository(Country);
         const stateRepo = dataSource.getRepository(State);
         const cityRepo = dataSource.getRepository(City);
         const userRepo = dataSource.getRepository(User);
-        const vendorRepo = dataSource.getRepository(VendorProfile);
-
-        const country = await countryRepo.save({
-            name: 'Bangladesh',
-            isoCode: 'BD',
-        });
-
-        const state = await stateRepo.save({
-            name: 'Dhaka',
-            country: country,
-        });
-
-        const city = await cityRepo.save({
-            name: 'Gulshan',
-            state: state,
-            centerPoint: {
-                type: 'Point',
-                coordinates: [90.4078, 23.7925],
-            },
-        });
-
-        const user = await userRepo.save({
-            email: 'vendor@example.com',
-            passwordHash: 'hashedpassword',
-            role: UserRole.VENDOR,
-        });
-
-        const vendor = await vendorRepo.save({
-            businessName: 'Burger King',
-            slug: 'burger-king',
-            user: user,
-            city: city,
-            location: {
-                type: 'Point',
-                coordinates: [90.4078, 23.7925],
-            },
-        });
-
-        // Generate Token
-        const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
-
-        // Test
-        const payload = {
-            title: 'Test Deal',
-            description: 'Best deal ever',
-            type: OfferType.DISCOUNT,
-            vendorId: vendor.id,
-            discountPercentage: 50,
-        };
-
-        const response = await request(app.getHttpServer())
-            .post('/api/offers')
-            .set('Authorization', `Bearer ${token}`)
-            .send(payload)
-            .expect(201);
-
-        expect(response.body).toHaveProperty('id');
-        expect(response.body.city.id).toBe(city.id);
-    });
-
-    it('GET /api/offers (Smart Feed)', async () => {
-        const countryRepo = dataSource.getRepository(Country);
-        const stateRepo = dataSource.getRepository(State);
-        const cityRepo = dataSource.getRepository(City);
-        const userRepo = dataSource.getRepository(User);
-        const vendorRepo = dataSource.getRepository(VendorProfile);
 
         const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
         const state = await stateRepo.save({ name: 'Dhaka', country });
@@ -131,39 +63,83 @@ describe('OffersController (e2e)', () => {
             state,
             centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
         });
-        const user = await userRepo.save({ email: 'vendor@example.com', passwordHash: 'hash', role: UserRole.VENDOR });
-        const vendor = await vendorRepo.save({
-            businessName: 'Burger King',
-            slug: 'burger-king',
-            user,
-            city,
-            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+
+        // Seed User
+        const user = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.CUSTOMER, // Initially Customer
         });
 
-        // Generate Token
         const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
 
         const payload = {
-            title: 'Test Deal',
-            description: 'Best deal ever',
-            type: OfferType.DISCOUNT,
-            vendorId: vendor.id,
-            discountPercentage: 50,
+            businessName: 'My Awesome Store',
+            operatingCityId: city.id,
+            address: '123 Main St',
+            latitude: 23.7925,
+            longitude: 90.4078,
         };
 
-        await request(app.getHttpServer())
-            .post('/api/offers')
+        const response = await request(app.getHttpServer())
+            .post('/api/vendors')
             .set('Authorization', `Bearer ${token}`)
             .send(payload)
             .expect(201);
 
+        expect(response.body).toHaveProperty('id');
+        expect(response.body.businessName).toBe(payload.businessName);
+
+        // Verify Role Upgrade
+        const updatedUser = await userRepo.findOne({ where: { id: user.id } });
+        expect(updatedUser.role).toBe(UserRole.VENDOR);
+    });
+
+    it('GET /api/vendors/me (Get My Profile)', async () => {
+        // Seed Location
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        // Seed User
+        const user = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.CUSTOMER,
+        });
+
+        const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
+
+        // Create Profile
+        const payload = {
+            businessName: 'My Awesome Store',
+            operatingCityId: city.id,
+            address: '123 Main St',
+            latitude: 23.7925,
+            longitude: 90.4078,
+        };
+
+        await request(app.getHttpServer())
+            .post('/api/vendors')
+            .set('Authorization', `Bearer ${token}`)
+            .send(payload)
+            .expect(201);
+
+        // Get Profile
         const response = await request(app.getHttpServer())
-            .get('/api/offers')
-            .query({ cityId: city.id })
+            .get('/api/vendors/me')
+            .set('Authorization', `Bearer ${token}`)
             .expect(200);
 
-        expect(Array.isArray(response.body)).toBe(true);
-        expect(response.body.length).toBeGreaterThan(0);
-        expect(response.body[0].title).toBe('Test Deal');
+        expect(response.body.businessName).toBe(payload.businessName);
     });
 });
