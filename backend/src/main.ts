@@ -16,6 +16,7 @@ async function bootstrap() {
     .setTitle('Offerify API')
     .setDescription('Hyper-local Deal Engine')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
