@@ -11,9 +11,11 @@ import {
     RelationId,
     OneToMany,
 } from 'typeorm';
+import { Exclude, Expose } from 'class-transformer';
 import { VendorProfile } from './vendor-profile.entity';
 import { City } from './city.entity';
 import { Favorite } from './favorite.entity';
+import { Category } from './category.entity';
 
 export enum OfferType {
     DISCOUNT = 'discount',
@@ -38,6 +40,16 @@ export class Offer {
         enum: OfferType,
     })
     type: OfferType;
+
+    @Column({ nullable: true, name: 'image_path' })
+    @Exclude()
+    imagePath: string;
+
+    @Expose()
+    get image(): string | null {
+        if (!this.imagePath) return null;
+        return `${process.env.APP_URL || 'http://localhost:3000'}${this.imagePath}`;
+    }
 
     @ManyToOne(() => VendorProfile, (vendor) => vendor.offers)
     @JoinColumn({ name: 'vendor_id' })
@@ -70,6 +82,13 @@ export class Offer {
 
     @OneToMany(() => Favorite, (favorite) => favorite.offer)
     favorites: Favorite[];
+
+    @ManyToOne(() => Category)
+    @JoinColumn({ name: 'category_id' })
+    category: Category;
+
+    @RelationId((offer: Offer) => offer.category)
+    categoryId: string;
 }
 
 @ChildEntity(OfferType.DISCOUNT)

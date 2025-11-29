@@ -1,15 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from './../src/app.module';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import contentParser from '@fastify/multipart';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { City } from './../src/domain/entities/city.entity';
 import { State } from './../src/domain/entities/state.entity';
 import { Country } from './../src/domain/entities/country.entity';
 import { User, UserRole } from './../src/domain/entities/user.entity';
 import { VendorProfile } from './../src/domain/entities/vendor-profile.entity';
 import { OfferType } from './../src/domain/entities/offer.entity';
+import { Category } from './../src/domain/entities/category.entity';
 
 describe('OffersController (e2e)', () => {
     let app: NestFastifyApplication;
@@ -24,7 +28,19 @@ describe('OffersController (e2e)', () => {
         app = moduleFixture.createNestApplication<NestFastifyApplication>(
             new FastifyAdapter(),
         );
+
+        // Register multipart for E2E app instance
+        await app.register(contentParser);
+
         app.setGlobalPrefix('api');
+        app.useGlobalPipes(
+            new ValidationPipe({
+                whitelist: true,
+                forbidNonWhitelisted: true,
+                transform: true,
+            }),
+        );
+        // app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -95,6 +111,13 @@ describe('OffersController (e2e)', () => {
             },
         });
 
+        const categoryRepo = dataSource.getRepository(Category);
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
         // Generate Token
         const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
 
@@ -105,12 +128,18 @@ describe('OffersController (e2e)', () => {
             type: OfferType.DISCOUNT,
             vendorId: vendor.id,
             discountPercentage: 50,
+            categoryId: category.id,
         };
 
         const response = await request(app.getHttpServer())
             .post('/api/offers')
             .set('Authorization', `Bearer ${token}`)
-            .send(payload)
+            .field('title', payload.title)
+            .field('description', payload.description)
+            .field('type', payload.type)
+            .field('vendorId', payload.vendorId)
+            .field('discountPercentage', payload.discountPercentage)
+            .field('categoryId', payload.categoryId)
             .expect(201);
 
         expect(response.body).toHaveProperty('id');
@@ -140,6 +169,13 @@ describe('OffersController (e2e)', () => {
             location: { type: 'Point', coordinates: [90.4078, 23.7925] },
         });
 
+        const categoryRepo = dataSource.getRepository(Category);
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
         // Generate Token
         const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
 
@@ -149,12 +185,18 @@ describe('OffersController (e2e)', () => {
             type: OfferType.DISCOUNT,
             vendorId: vendor.id,
             discountPercentage: 50,
+            categoryId: category.id,
         };
 
         await request(app.getHttpServer())
             .post('/api/offers')
             .set('Authorization', `Bearer ${token}`)
-            .send(payload)
+            .field('title', payload.title)
+            .field('description', payload.description)
+            .field('type', payload.type)
+            .field('vendorId', payload.vendorId)
+            .field('discountPercentage', payload.discountPercentage)
+            .field('categoryId', payload.categoryId)
             .expect(201);
 
         const response = await request(app.getHttpServer())

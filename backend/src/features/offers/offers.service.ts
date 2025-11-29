@@ -1,10 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { MultipartFile } from '@fastify/multipart';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
+
+import { CategoriesService } from '../categories/categories.service';
+import { FileUploadUtil } from '../../common/utils/file-upload.util';
 
 @Injectable()
 export class OffersService {
@@ -13,9 +17,10 @@ export class OffersService {
         private readonly offerRepository: Repository<Offer>,
         @InjectRepository(VendorProfile)
         private readonly vendorRepository: Repository<VendorProfile>,
+        private readonly categoriesService: CategoriesService,
     ) { }
 
-    async createOffer(userId: string, createOfferDto: CreateOfferDto): Promise<Offer> {
+    async createOffer(userId: string, createOfferDto: CreateOfferDto, file?: MultipartFile): Promise<Offer> {
         // Fetch vendor with city relation to get operating city
         const vendor = await this.vendorRepository.findOne({
             where: { user: { id: userId } },
@@ -26,23 +31,47 @@ export class OffersService {
             throw new NotFoundException(`Vendor profile not found for user ${userId}`);
         }
 
+        // Validate Category
+        const category = await this.categoriesService.findOne(createOfferDto.categoryId);
+        if (!category) {
+            throw new NotFoundException(`Category with ID ${createOfferDto.categoryId} not found`);
+        }
+
         // Multi-Branch Logic: Use provided cityId or fallback to vendor's operating city
         const targetCityId = createOfferDto.cityId || vendor.cityId;
+
+        let imagePath: string | undefined;
+        if (file) {
+            try {
+                imagePath = await FileUploadUtil.saveFile(file, 'offers');
+            } catch (error) {
+                console.error('File upload failed:', error);
+                throw error;
+            }
+        }
 
         // Create offer with the target city and vendor
         const offer = this.offerRepository.create({
             ...createOfferDto,
-            city: { id: targetCityId } as any, // Assign relation reference
-            vendor: vendor, // Assign vendor entity
+            city: { id: targetCityId } as any, // Link to City entity
+            category: { id: createOfferDto.categoryId } as any,
+            vendor: vendor,
+            imagePath: imagePath,
         });
 
         // Save the offer
-        const savedOffer = await this.offerRepository.save(offer);
+        let savedOffer: Offer;
+        try {
+            savedOffer = await this.offerRepository.save(offer);
+        } catch (error) {
+            console.error('Save failed:', error);
+            throw error;
+        }
 
         // Fetch the offer again with city relation populated for response
         const offerWithCity = await this.offerRepository.findOne({
             where: { id: savedOffer.id },
-            relations: ['city'],
+            relations: ['city', 'category'],
         });
 
         if (!offerWithCity) {

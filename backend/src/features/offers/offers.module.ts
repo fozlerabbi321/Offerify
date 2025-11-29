@@ -6,8 +6,13 @@ import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { City } from '../../domain/entities/city.entity';
 
+import { CategoriesModule } from '../categories/categories.module';
+
 @Module({
-    imports: [TypeOrmModule.forFeature([Offer, VendorProfile, City])],
+    imports: [
+        TypeOrmModule.forFeature([Offer, VendorProfile, City]),
+        CategoriesModule,
+    ],
     controllers: [OffersController],
     providers: [OffersService],
     exports: [OffersService],

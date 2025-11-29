@@ -1,4 +1,5 @@
 import { IsString, IsEnum, IsUUID, IsOptional, IsNumber, Min, Max, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OfferType } from '../../../domain/entities/offer.entity';
 
@@ -22,11 +23,17 @@ export class CreateOfferDto {
         description: 'Target city ID for this offer. If not provided, defaults to vendor\'s operating city (Multi-Branch Support).'
     })
     @IsOptional()
+    @Type(() => Number)
     @IsInt()
     cityId?: number;
 
+    @ApiProperty({ example: 'uuid-of-category' })
+    @IsUUID()
+    categoryId: string;
+
     @ApiPropertyOptional({ example: 50, minimum: 0, maximum: 100 })
     @IsOptional()
+    @Type(() => Number)
     @IsNumber()
     @Min(0)
     @Max(100)
@@ -39,7 +46,12 @@ export class CreateOfferDto {
 
     @ApiPropertyOptional({ example: 100, minimum: 0 })
     @IsOptional()
+    @Type(() => Number)
     @IsNumber()
     @Min(0)
     voucherValue?: number;
+
+    @ApiProperty({ type: 'string', format: 'binary', description: 'Offer image' })
+    @IsOptional()
+    file?: any;
 }

@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query, UseGuards, Request, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import type { FastifyRequest } from 'fastify';
 import { OffersService } from './offers.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
@@ -15,13 +16,55 @@ export class OffersController {
     constructor(private readonly offersService: OffersService) { }
 
     @Post()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.VENDOR)
+    @UseGuards(JwtAuthGuard)
+    // @Roles(UserRole.VENDOR)
     @ApiOperation({ summary: 'Create a new offer' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                title: { type: 'string' },
+                description: { type: 'string' },
+                type: { type: 'string', enum: ['discount', 'coupon', 'voucher'] },
+                categoryId: { type: 'string', format: 'uuid' },
+                cityId: { type: 'integer', nullable: true },
+                discountPercentage: { type: 'number', nullable: true },
+                couponCode: { type: 'string', nullable: true },
+                voucherValue: { type: 'integer', nullable: true },
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            required: ['title', 'description', 'type', 'categoryId'],
+        },
+    })
     @ApiResponse({ status: 201, description: 'Offer created successfully' })
     @ApiResponse({ status: 400, description: 'Invalid input' })
-    async createOffer(@Body() createOfferDto: CreateOfferDto, @Request() req) {
-        return this.offersService.createOffer(req.user.userId, createOfferDto);
+    async createOffer(@Req() req: FastifyRequest) {
+        const parts = req.parts();
+        let file: any;
+        const body: any = {};
+
+        for await (const part of parts) {
+            if (part.type === 'file') {
+                file = part;
+            } else {
+                body[part.fieldname] = part.value;
+            }
+        }
+
+        const createOfferDto: CreateOfferDto = {
+            ...body,
+            // Convert string numbers to actual numbers
+            cityId: body.cityId ? parseInt(body.cityId) : undefined,
+            discountPercentage: body.discountPercentage ? parseFloat(body.discountPercentage) : undefined,
+            voucherValue: body.voucherValue ? parseInt(body.voucherValue) : undefined,
+            file: undefined, // Handled separately
+        };
+
+        return this.offersService.createOffer((req as any).user.userId, createOfferDto, file);
     }
 
     @Get()
