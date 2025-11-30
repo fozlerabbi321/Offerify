@@ -97,7 +97,10 @@ describe('AuthService', () => {
             const result = await service.validateUser(email, password);
 
             expect(result).toEqual({ id: 'uuid', email, role: UserRole.CUSTOMER });
-            expect(mockUserRepository.findOne).toHaveBeenCalledWith({ where: { email } });
+            expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+                where: { email },
+                select: ['id', 'email', 'passwordHash', 'role', 'createdAt', 'updatedAt'],
+            });
         });
 
         it('should return null if user not found', async () => {

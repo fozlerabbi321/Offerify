@@ -5,11 +5,13 @@ import { NotFoundException } from '@nestjs/common';
 import { OffersService } from '../../../../src/features/offers/offers.service';
 import { Offer, OfferType } from '../../../../src/domain/entities/offer.entity';
 import { VendorProfile } from '../../../../src/domain/entities/vendor-profile.entity';
+import { CategoriesService } from '../../../../src/features/categories/categories.service';
 
 describe('OffersService', () => {
     let service: OffersService;
     let offerRepository: Repository<Offer>;
     let vendorRepository: Repository<VendorProfile>;
+    let categoriesService: CategoriesService;
 
     const mockVendor = {
         id: 'vendor-uuid',
@@ -42,6 +44,12 @@ describe('OffersService', () => {
                         findOne: jest.fn(),
                     },
                 },
+                {
+                    provide: CategoriesService,
+                    useValue: {
+                        findOne: jest.fn(),
+                    },
+                },
             ],
         }).compile();
 
@@ -50,6 +58,7 @@ describe('OffersService', () => {
         vendorRepository = module.get<Repository<VendorProfile>>(
             getRepositoryToken(VendorProfile),
         );
+        categoriesService = module.get<CategoriesService>(CategoriesService);
     });
 
     it('should be defined', () => {
@@ -64,6 +73,7 @@ describe('OffersService', () => {
                 type: OfferType.DISCOUNT,
                 vendorId: 'vendor-uuid',
                 discountPercentage: 50,
+                categoryId: 'category-uuid',
             };
 
             const savedOffer = {
@@ -84,19 +94,23 @@ describe('OffersService', () => {
             };
 
             jest.spyOn(vendorRepository, 'findOne').mockResolvedValue(mockVendor as any);
+            jest.spyOn(categoriesService, 'findOne').mockResolvedValue({ id: 1, name: 'Food' } as any);
             jest.spyOn(offerRepository, 'create').mockReturnValue(savedOffer as any);
             jest.spyOn(offerRepository, 'save').mockResolvedValue(savedOffer as any);
             jest.spyOn(offerRepository, 'findOne').mockResolvedValue(offerWithCity as any);
 
-            const result = await service.createOffer(createOfferDto);
+            const result = await service.createOffer('user-uuid', createOfferDto);
 
             expect(vendorRepository.findOne).toHaveBeenCalledWith({
-                where: { id: 'vendor-uuid' },
+                where: { user: { id: 'user-uuid' } },
                 relations: ['city'],
             });
             expect(offerRepository.create).toHaveBeenCalledWith({
                 ...createOfferDto,
-                cityId: 1, // Should use vendor's operating city
+                city: { id: 1 },
+                category: { id: 'category-uuid' },
+                vendor: mockVendor,
+                imagePath: undefined,
             });
             expect(result.city).toBeDefined();
             expect(result.city.id).toBe(1);
@@ -110,6 +124,7 @@ describe('OffersService', () => {
                 vendorId: 'vendor-uuid',
                 cityId: 99, // Different from vendor's city (id: 1)
                 discountPercentage: 50,
+                categoryId: 'category-uuid',
             };
 
             const savedOffer = {
@@ -129,15 +144,19 @@ describe('OffersService', () => {
             };
 
             jest.spyOn(vendorRepository, 'findOne').mockResolvedValue(mockVendor as any);
+            jest.spyOn(categoriesService, 'findOne').mockResolvedValue({ id: 1, name: 'Food' } as any);
             jest.spyOn(offerRepository, 'create').mockReturnValue(savedOffer as any);
             jest.spyOn(offerRepository, 'save').mockResolvedValue(savedOffer as any);
             jest.spyOn(offerRepository, 'findOne').mockResolvedValue(offerWithCity as any);
 
-            const result = await service.createOffer(createOfferDto);
+            const result = await service.createOffer('user-uuid', createOfferDto);
 
             expect(offerRepository.create).toHaveBeenCalledWith({
                 ...createOfferDto,
-                cityId: 99, // Should use provided cityId, not vendor's city
+                city: { id: 99 },
+                category: { id: 'category-uuid' },
+                vendor: mockVendor,
+                imagePath: undefined,
             });
             expect(result.cityId).toBe(99);
             expect(result.city.id).toBe(99);
@@ -150,15 +169,16 @@ describe('OffersService', () => {
                 type: OfferType.DISCOUNT,
                 vendorId: 'non-existent-vendor',
                 discountPercentage: 50,
+                categoryId: 'category-uuid',
             };
 
             jest.spyOn(vendorRepository, 'findOne').mockResolvedValue(null);
 
-            await expect(service.createOffer(createOfferDto)).rejects.toThrow(
+            await expect(service.createOffer('user-uuid', createOfferDto)).rejects.toThrow(
                 NotFoundException,
             );
-            await expect(service.createOffer(createOfferDto)).rejects.toThrow(
-                'Vendor with ID non-existent-vendor not found',
+            await expect(service.createOffer('user-uuid', createOfferDto)).rejects.toThrow(
+                'Vendor profile not found for user user-uuid',
             );
         });
     });
@@ -250,7 +270,7 @@ describe('OffersService', () => {
             });
             expect(offerRepository.save).toHaveBeenCalled();
             expect(result.title).toBe('Updated Title');
-            expect(result.discountPercentage).toBe(75);
+            expect((result as any).discountPercentage).toBe(75);
         });
 
         it('should throw NotFoundException if offer not found', async () => {

@@ -17,6 +17,7 @@ describe('RedemptionsService', () => {
     const mockRedemptionRepo = {
         findOne: jest.fn(),
         save: jest.fn(),
+        insert: jest.fn(),
         create: jest.fn().mockReturnValue({ id: 'redemption-123', isUsed: false }),
     };
 
@@ -70,15 +71,18 @@ describe('RedemptionsService', () => {
         const offerId = 'offer-123';
 
         it('should successfully claim if stock available', async () => {
-            mockRedemptionRepo.findOne.mockResolvedValue(null); // Not already claimed
+            mockRedemptionRepo.findOne
+                .mockResolvedValueOnce(null) // Not already claimed
+                .mockResolvedValueOnce({ id: 'redemption-123', isUsed: false }); // Return created redemption
+
             // mockOfferRepo.createQueryBuilder already returns affected: 1 by default
-            mockRedemptionRepo.save.mockResolvedValue({ id: 'redemption-123', isUsed: false });
+            mockRedemptionRepo.insert.mockResolvedValue({ identifiers: [{ id: 'redemption-123' }] });
 
             const result = await service.claim(userId, offerId);
 
             expect(mockRedemptionRepo.findOne).toHaveBeenCalledWith({ where: { user: { id: userId }, offer: { id: offerId } } });
             expect(mockOfferRepo.createQueryBuilder).toHaveBeenCalled();
-            expect(mockRedemptionRepo.save).toHaveBeenCalled();
+            expect(mockRedemptionRepo.insert).toHaveBeenCalled();
             expect(result).toEqual({ id: 'redemption-123', isUsed: false });
         });
 

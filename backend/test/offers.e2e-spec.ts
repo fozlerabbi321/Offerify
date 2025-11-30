@@ -140,6 +140,7 @@ describe('OffersController (e2e)', () => {
             .field('vendorId', payload.vendorId)
             .field('discountPercentage', payload.discountPercentage)
             .field('categoryId', payload.categoryId)
+            .attach('file', Buffer.from('fake image content'), 'offer-image.png')
             .expect(201);
 
         expect(response.body).toHaveProperty('id');

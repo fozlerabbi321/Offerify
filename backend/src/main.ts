@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // Enable Static Assets
   app.useStaticAssets({
-    root: join(__dirname, '..', 'uploads'),
+    root: join(process.cwd(), 'uploads'),
     prefix: '/public/',
   });
 

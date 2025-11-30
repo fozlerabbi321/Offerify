@@ -28,11 +28,17 @@ export class CategoriesController {
     async create(@Req() req: FastifyRequest) {
         const parts = req.parts();
         let name: string | undefined;
-        let file: any;
+        let fileData: { buffer: Buffer; filename: string; mimetype: string } | undefined;
 
         for await (const part of parts) {
             if (part.type === 'file') {
-                file = part;
+                // Consume the stream immediately to prevent hanging
+                const buffer = await part.toBuffer();
+                fileData = {
+                    buffer,
+                    filename: part.filename,
+                    mimetype: part.mimetype,
+                };
             } else {
                 if (part.fieldname === 'name') {
                     name = part.value as string;
@@ -44,7 +50,19 @@ export class CategoriesController {
             throw new Error('Name is required');
         }
 
-        const createCategoryDto: CreateCategoryDto = { name, file: undefined }; // file is handled separately
+        const createCategoryDto: CreateCategoryDto = { name, file: undefined };
+
+        // Construct a compatible MultipartFile object if file exists
+        const file = fileData ? {
+            toBuffer: async () => fileData.buffer,
+            filename: fileData.filename,
+            mimetype: fileData.mimetype,
+            type: 'file',
+            fieldname: 'file',
+            encoding: '7bit',
+            fields: {},
+        } as any : undefined;
+
         return this.categoriesService.create(createCategoryDto, file);
     }
 

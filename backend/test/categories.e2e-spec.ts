@@ -4,6 +4,8 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
+import contentParser from '@fastify/multipart';
+
 describe('CategoriesController (e2e)', () => {
     let app: NestFastifyApplication;
 
@@ -15,6 +17,10 @@ describe('CategoriesController (e2e)', () => {
         app = moduleFixture.createNestApplication<NestFastifyApplication>(
             new FastifyAdapter(),
         );
+
+        // Register multipart plugin
+        await app.register(contentParser);
+
         app.setGlobalPrefix('api');
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -27,7 +33,8 @@ describe('CategoriesController (e2e)', () => {
     it('/api/categories (POST)', () => {
         return request(app.getHttpServer())
             .post('/api/categories')
-            .send({ name: 'Test Category', slug: 'test-category' })
+            .field('name', 'Test Category')
+            .attach('file', Buffer.from('fake image content'), 'test-image.png')
             .expect(201)
             .expect((res) => {
                 expect(res.body).toHaveProperty('id');

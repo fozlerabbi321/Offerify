@@ -44,12 +44,17 @@ export class OffersController {
     @ApiResponse({ status: 400, description: 'Invalid input' })
     async createOffer(@Req() req: FastifyRequest) {
         const parts = req.parts();
-        let file: any;
+        let fileData: { buffer: Buffer; filename: string; mimetype: string } | undefined;
         const body: any = {};
 
         for await (const part of parts) {
             if (part.type === 'file') {
-                file = part;
+                const buffer = await part.toBuffer();
+                fileData = {
+                    buffer,
+                    filename: part.filename,
+                    mimetype: part.mimetype,
+                };
             } else {
                 body[part.fieldname] = part.value;
             }
@@ -63,6 +68,16 @@ export class OffersController {
             voucherValue: body.voucherValue ? parseInt(body.voucherValue) : undefined,
             file: undefined, // Handled separately
         };
+
+        const file = fileData ? {
+            toBuffer: async () => fileData.buffer,
+            filename: fileData.filename,
+            mimetype: fileData.mimetype,
+            type: 'file',
+            fieldname: 'file',
+            encoding: '7bit',
+            fields: {},
+        } as any : undefined;
 
         return this.offersService.createOffer((req as any).user.userId, createOfferDto, file);
     }
