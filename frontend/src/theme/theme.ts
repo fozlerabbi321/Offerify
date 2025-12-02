@@ -9,6 +9,8 @@ const palette = {
     greenPrimary: '#0ECD9D',
     greenDark: '#0A906E',
 
+    error: '#FF0000',
+
     black: '#0B0B0B',
     white: '#FFFFFF',
     offWhite: '#F0F2F3',
@@ -26,6 +28,7 @@ const theme = createTheme({
         textInverted: palette.white,
         primary: palette.purplePrimary,
         secondary: palette.greenPrimary,
+        error: palette.error,
         ...palette,
     },
     spacing: {

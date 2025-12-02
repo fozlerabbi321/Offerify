@@ -5,6 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
+import { useLocationStore } from '../../store/location.store';
+import LocationPickerModal from './LocationPickerModal';
+import { useState } from 'react';
+import { useRouter } from 'expo-router';
 
 interface MobileHeaderProps {
     title?: string;
@@ -17,6 +21,9 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
     const isWeb = Platform.OS === 'web';
     const { width } = useWindowDimensions();
     const isDesktop = width >= 768;
+    const { cityName } = useLocationStore();
+    const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+    const router = useRouter();
 
     if (isWeb && isDesktop) return null; // Only hide on Desktop Web
 
@@ -51,16 +58,21 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
                     </Box>
 
                     {/* Location Selector */}
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
                         <Box flexDirection="row" alignItems="center" backgroundColor="offWhite" paddingHorizontal="m" paddingVertical="s" borderRadius={20}>
                             <Ionicons name="map" size={16} color={theme.colors.primary} />
-                            <Text variant="body" fontSize={14} marginLeft="s" fontWeight="600">Dhaka, Bangladesh</Text>
+                            <Text variant="body" fontSize={14} marginLeft="s" fontWeight="600">{cityName}</Text>
                             <Ionicons name="chevron-down" size={14} color={theme.colors.darkGray} style={{ marginLeft: 4 }} />
                         </Box>
                     </TouchableOpacity>
 
+                    <LocationPickerModal
+                        visible={isLocationModalVisible}
+                        onClose={() => setLocationModalVisible(false)}
+                    />
+
                     {/* Search Icon */}
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/search')}>
                         <Box width={36} height={36} backgroundColor="offWhite" borderRadius={18} justifyContent="center" alignItems="center">
                             <Ionicons name="search" size={20} color={theme.colors.darkGray} />
                         </Box>
@@ -80,7 +92,7 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
 
                     <Box flexDirection="row" gap="s">
                         {/* Search Icon */}
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push('/search')}>
                             <Box width={36} height={36} backgroundColor="offWhite" borderRadius={18} justifyContent="center" alignItems="center">
                                 <Ionicons name="search" size={20} color={theme.colors.darkGray} />
                             </Box>

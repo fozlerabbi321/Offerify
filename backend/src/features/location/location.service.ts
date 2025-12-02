@@ -44,4 +44,12 @@ export class LocationService {
 
     return city;
   }
+
+  async findAll(): Promise<City[]> {
+    return this.cityRepository.find({
+      order: {
+        name: 'ASC',
+      },
+    });
+  }
 }

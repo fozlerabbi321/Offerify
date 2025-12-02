@@ -1,10 +1,21 @@
 import React from 'react';
 import Box from '../ui/Box';
 import Text from '../ui/Text';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
+import { useLocationStore } from '../../store/location.store';
+import LocationPickerModal from '../home/LocationPickerModal';
+import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@shopify/restyle';
+import { Theme } from '../../theme/theme';
 
 const Navbar = () => {
+    const theme = useTheme<Theme>();
+    const { cityName } = useLocationStore();
+    const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+    const router = useRouter();
+
     return (
         <Box
             height={60}
@@ -34,12 +45,25 @@ const Navbar = () => {
             </Box>
 
             <Box flexDirection="row" alignItems="center" gap="m">
-                <Box padding="s" backgroundColor="offWhite" borderRadius={8}>
-                    <Text>Dhaka, Bangladesh</Text>
-                </Box>
-                <Box width={200} height={40} backgroundColor="offWhite" borderRadius={8} justifyContent="center" paddingLeft="m">
-                    <Text color="darkGray">Search offers...</Text>
-                </Box>
+                <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
+                    <Box padding="s" backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center">
+                        <Ionicons name="map" size={16} color={theme.colors.primary} />
+                        <Text marginLeft="s" fontWeight="600">{cityName}</Text>
+                        <Ionicons name="chevron-down" size={14} color={theme.colors.darkGray} style={{ marginLeft: 4 }} />
+                    </Box>
+                </TouchableOpacity>
+
+                <LocationPickerModal
+                    visible={isLocationModalVisible}
+                    onClose={() => setLocationModalVisible(false)}
+                />
+
+                <TouchableOpacity onPress={() => router.push('/search')}>
+                    <Box width={200} height={40} backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center" paddingHorizontal="m">
+                        <Ionicons name="search" size={16} color={theme.colors.darkGray} />
+                        <Text color="darkGray" marginLeft="s">Search offers...</Text>
+                    </Box>
+                </TouchableOpacity>
             </Box>
         </Box>
     );

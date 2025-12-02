@@ -11,4 +11,9 @@ export class LocationController {
     async getNearestZone(@Query() query: NearestZoneDto): Promise<City> {
         return this.locationService.findNearestZone(query.lat, query.long);
     }
+
+    @Get('cities')
+    async getAllCities(): Promise<City[]> {
+        return this.locationService.findAll();
+    }
 }
