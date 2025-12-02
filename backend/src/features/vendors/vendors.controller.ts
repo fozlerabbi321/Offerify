@@ -26,4 +26,11 @@ export class VendorsController {
     async findMyProfile(@Req() req) {
         return this.vendorsService.findMyProfile(req.user.userId);
     }
+
+    @Get('stats')
+    @ApiOperation({ summary: 'Get vendor stats' })
+    @ApiResponse({ status: 200, description: 'Return vendor stats.' })
+    async getStats(@Req() req) {
+        return this.vendorsService.getStats(req.user.userId);
+    }
 }

@@ -81,16 +81,84 @@ export class OffersService {
         return offerWithCity;
     }
 
-    async findAll(cityId?: number): Promise<Offer[]> {
-        const where: any = { isActive: true };
+    async findAll(options: {
+        cityId?: number;
+        featured?: boolean;
+        sort?: 'popularity' | 'newest' | 'price_asc' | 'price_desc';
+        lat?: number;
+        long?: number;
+        limit?: number;
+        categoryId?: string;
+    }): Promise<Offer[]> {
+        const { cityId, featured, sort, lat, long, limit, categoryId } = options;
+        const query = this.offerRepository.createQueryBuilder('offer')
+            .leftJoinAndSelect('offer.city', 'city')
+            .leftJoinAndSelect('offer.vendor', 'vendor')
+            .where('offer.isActive = :isActive', { isActive: true });
+
         if (cityId) {
-            where.city = { id: cityId };
+            query.andWhere('offer.cityId = :cityId', { cityId });
         }
-        return this.offerRepository.find({
-            where,
-            relations: ['city', 'vendor'],
-            order: { createdAt: 'DESC' },
-        });
+
+        if (categoryId) {
+            query.andWhere('offer.categoryId = :categoryId', { categoryId });
+        }
+
+        if (featured) {
+            query.andWhere('offer.featured = :featured', { featured: true });
+        }
+
+        if (lat && long) {
+            // PostGIS ST_DWithin or order by distance
+            // Assuming we want to sort by distance if lat/long are present
+            // Note: This requires PostGIS extension and geometry column on City or VendorProfile
+            // But here we are sorting offers. Offers are linked to City.
+            // Or maybe we use the Vendor's location?
+            // The requirement says "Near You: Horizontal Scroll of offers sorted by distance (using lat/long from store)"
+            // Offers have a city. Cities have coordinates.
+            // Or Vendors have coordinates.
+            // Let's assume we use the offer's city location for now as offers are linked to city.
+            // But wait, VendorProfile has `location` (Point).
+            // Let's use Vendor's location for more precision if available, or City's.
+            // The Offer entity has `vendor` and `city`.
+            // Let's check VendorProfile entity. It has `location`.
+
+            // We need to join vendor to sort by distance
+            query.addSelect(
+                `ST_Distance(
+                    vendor.location, 
+                    ST_SetSRID(ST_MakePoint(:long, :lat), 4326)::geography
+                )`,
+                'distance'
+            )
+                .setParameter('long', long)
+                .setParameter('lat', lat)
+                .orderBy('distance', 'ASC');
+        }
+
+        if (sort === 'popularity') {
+            query.orderBy('offer.views', 'DESC');
+        } else if (sort === 'newest') {
+            query.orderBy('offer.createdAt', 'DESC');
+        } else if (sort === 'price_asc') {
+            // This is tricky because price is in child entities.
+            // For now, let's skip complex price sorting or implement basic check
+            // DiscountOffer has discountPercentage, VoucherOffer has voucherValue.
+            // We can't easily sort by "price" across different types without a common column.
+            // Let's ignore price sort for now or default to createdAt
+            query.orderBy('offer.createdAt', 'DESC');
+        } else if (sort === 'price_desc') {
+            query.orderBy('offer.createdAt', 'DESC');
+        } else if (!lat || !long) {
+            // Default sort if not sorting by distance
+            query.orderBy('offer.createdAt', 'DESC');
+        }
+
+        if (limit) {
+            query.take(limit);
+        }
+
+        return query.getMany();
     }
 
     async findOne(id: string): Promise<Offer> {

@@ -80,6 +80,12 @@ export class Offer {
     @Column({ type: 'int', default: 0, nullable: true })
     voucherClaimedCount: number;
 
+    @Column({ default: false })
+    featured: boolean;
+
+    @Column({ type: 'int', default: 0 })
+    views: number;
+
     @OneToMany(() => Favorite, (favorite) => favorite.offer)
     favorites: Favorite[];
 

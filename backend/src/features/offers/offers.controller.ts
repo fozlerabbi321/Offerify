@@ -85,8 +85,16 @@ export class OffersController {
     @Get()
     @ApiOperation({ summary: 'Get offers (Smart Feed)' })
     @ApiResponse({ status: 200, description: 'List of offers' })
-    async findAll(@Query('cityId') cityId: number) {
-        return this.offersService.findAll(cityId);
+    async findAll(
+        @Query('cityId') cityId?: number,
+        @Query('featured') featured?: boolean,
+        @Query('sort') sort?: 'popularity' | 'newest' | 'price_asc' | 'price_desc',
+        @Query('lat') lat?: number,
+        @Query('long') long?: number,
+        @Query('limit') limit?: number,
+        @Query('categoryId') categoryId?: string,
+    ) {
+        return this.offersService.findAll({ cityId, featured, sort, lat, long, limit, categoryId });
     }
 
     @Get(':id')

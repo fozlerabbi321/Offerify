@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { User, UserRole } from '../../domain/entities/user.entity';
 import { City } from '../../domain/entities/city.entity';
+import { Offer } from '../../domain/entities/offer.entity';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 
 @Injectable()
@@ -75,6 +76,25 @@ export class VendorsService {
         }
 
         return profile;
+    }
+
+    async getStats(userId: string): Promise<{ totalViews: number; totalSales: number; activeOffers: number }> {
+        const vendor = await this.findMyProfile(userId);
+
+        const stats = await this.dataSource.getRepository(Offer)
+            .createQueryBuilder('offer')
+            .select('SUM(offer.views)', 'totalViews')
+            .addSelect('SUM(offer.voucherClaimedCount)', 'totalSales')
+            .addSelect('COUNT(offer.id)', 'activeOffers')
+            .where('offer.vendorId = :vendorId', { vendorId: vendor.id })
+            .andWhere('offer.isActive = :isActive', { isActive: true })
+            .getRawOne();
+
+        return {
+            totalViews: parseInt(stats.totalViews) || 0,
+            totalSales: parseInt(stats.totalSales) || 0,
+            activeOffers: parseInt(stats.activeOffers) || 0,
+        };
     }
 }
 
