@@ -13,7 +13,9 @@ const palette = {
     white: '#FFFFFF',
     offWhite: '#F0F2F3',
     gray: '#E1E1E1',
+    grayMedium: '#888888',
     darkGray: '#333333',
+    transparent: 'transparent',
 };
 
 const theme = createTheme({

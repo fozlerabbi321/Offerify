@@ -15,17 +15,16 @@ interface Offer {
     type: 'discount' | 'coupon' | 'voucher';
 }
 
-const OfferCard = ({ offer }: { offer: Offer }) => {
+const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: number | string }) => {
     const theme = useTheme<Theme>();
 
     return (
-        <TouchableOpacity activeOpacity={0.9}>
+        <TouchableOpacity activeOpacity={0.9} style={{ width }}>
             <Box
-                width={200}
+                width="100%"
                 height={240}
                 backgroundColor="white"
                 borderRadius={16}
-                marginRight="m"
                 overflow="hidden"
                 shadowColor="black"
                 shadowOffset={{ width: 0, height: 2 }}

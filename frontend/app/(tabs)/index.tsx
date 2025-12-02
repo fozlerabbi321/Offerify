@@ -6,10 +6,10 @@ import Text from '../../src/components/ui/Text';
 import Box from '../../src/components/ui/Box';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../src/lib/api';
-import Header from '../../src/components/home/Header';
 import Categories from '../../src/components/home/Categories';
 import OfferCard from '../../src/components/home/OfferCard';
 import { useLocationStore } from '../../src/store/location.store';
+import ResponsiveGrid from '../../src/components/ui/ResponsiveGrid';
 
 const HeroSection = ({ offers }: { offers: any[] }) => {
     if (!offers || offers.length === 0) return null;
@@ -28,7 +28,9 @@ const HorizontalSection = ({ title, offers }: { title: string, offers: any[] }) 
             <Text variant="subheader" marginLeft="m" marginBottom="s">{title}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 16 }}>
                 {offers.map((offer) => (
-                    <OfferCard key={offer.id} offer={offer} />
+                    <Box key={offer.id} marginRight="m">
+                        <OfferCard offer={offer} width={200} />
+                    </Box>
                 ))}
             </ScrollView>
         </Box>
@@ -90,11 +92,9 @@ export default function HomeScreen() {
 
     return (
         <Container>
-            <Header />
             <FlatList
-                data={smartFeed || []}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
+                data={[]}
+                renderItem={null}
                 refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
                 ListHeaderComponent={
                     <>
@@ -103,6 +103,14 @@ export default function HomeScreen() {
                         <HorizontalSection title="Near You" offers={nearOffers} />
                         <HorizontalSection title="Trending" offers={trendingOffers} />
                         <Text variant="subheader" marginLeft="m" marginTop="l" marginBottom="m">Smart Feed</Text>
+                        <Box marginHorizontal="m">
+                            <ResponsiveGrid
+                                data={smartFeed || []}
+                                renderItem={(item) => <OfferCard offer={item} />}
+                                itemMinWidth={160}
+                                maxColumns={6}
+                            />
+                        </Box>
                     </>
                 }
             />
