@@ -7,7 +7,7 @@ import FullScreenMap from '../../src/components/FullScreenMap';
 
 const fetchOffers = async () => {
     const response = await api.get('/offers');
-    return response.data.data;
+    return response.data;
 };
 
 export default function MapScreen() {

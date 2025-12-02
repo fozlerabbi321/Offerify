@@ -12,7 +12,7 @@ import theme from '../../src/theme/theme';
 const fetchRedemptions = async () => {
     // Assuming this endpoint exists or will be created
     const response = await api.get('/redemptions/me');
-    return response.data.data;
+    return response.data;
 };
 
 export default function WalletScreen() {

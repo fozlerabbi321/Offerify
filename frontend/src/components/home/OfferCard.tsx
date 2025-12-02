@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import Box from '../ui/Box';
 import Text from '../ui/Text';
 import { Image } from 'expo-image';
@@ -17,9 +18,14 @@ interface Offer {
 
 const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: number | string }) => {
     const theme = useTheme<Theme>();
+    const router = useRouter();
 
     return (
-        <TouchableOpacity activeOpacity={0.9} style={{ width }}>
+        <TouchableOpacity
+            activeOpacity={0.9}
+            style={{ width }}
+            onPress={() => router.push(`/offer/${offer.id}`)}
+        >
             <Box
                 width="100%"
                 height={240}

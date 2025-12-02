@@ -5,6 +5,15 @@ import theme from '../src/theme/theme';
 import { useAuthStore } from '../src/store/auth.store';
 import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
+import { Platform } from 'react-native';
+
+if (Platform.OS === 'web') {
+    // Inject Leaflet CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+}
 
 const queryClient = new QueryClient();
 

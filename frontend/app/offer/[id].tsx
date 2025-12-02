@@ -16,7 +16,7 @@ const { width } = Dimensions.get('window');
 
 const fetchOffer = async (id: string) => {
     const response = await api.get(`/offers/${id}`);
-    return response.data.data;
+    return response.data;
 };
 
 const claimOffer = async (id: string) => {
