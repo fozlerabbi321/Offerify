@@ -13,4 +13,20 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+api.interceptors.response.use(
+    (response) => {
+        console.log('API Response for:', response.config.url, response.data);
+        // Unwrap the standard response format { data, meta, message }
+        if (response.data && response.data.data !== undefined) {
+            console.log('Unwrapping response data');
+            response.data = response.data.data;
+        }
+        return response;
+    },
+    (error) => {
+        console.error('API Error:', error);
+        return Promise.reject(error);
+    }
+);
+
 export default api;

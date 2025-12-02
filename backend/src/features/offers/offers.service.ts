@@ -89,19 +89,24 @@ export class OffersService {
         long?: number;
         limit?: number;
         categoryId?: string;
+        vendorId?: string;
     }): Promise<Offer[]> {
-        const { cityId, featured, sort, lat, long, limit, categoryId } = options;
+        const { cityId, featured, sort, lat, long, limit, categoryId, vendorId } = options;
         const query = this.offerRepository.createQueryBuilder('offer')
             .leftJoinAndSelect('offer.city', 'city')
             .leftJoinAndSelect('offer.vendor', 'vendor')
             .where('offer.isActive = :isActive', { isActive: true });
 
+        if (vendorId) {
+            query.andWhere('vendor.id = :vendorId', { vendorId });
+        }
+
         if (cityId) {
-            query.andWhere('offer.cityId = :cityId', { cityId });
+            query.andWhere('city.id = :cityId', { cityId });
         }
 
         if (categoryId) {
-            query.andWhere('offer.categoryId = :categoryId', { categoryId });
+            query.andWhere('offer.category = :categoryId', { categoryId });
         }
 
         if (featured) {

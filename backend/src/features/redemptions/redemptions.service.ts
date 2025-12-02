@@ -101,4 +101,12 @@ export class RedemptionsService {
 
         return this.redemptionRepo.save(redemption);
     }
+
+    async getMyRedemptions(userId: string) {
+        return this.redemptionRepo.find({
+            where: { user: { id: userId } },
+            relations: ['offer', 'offer.vendor'],
+            order: { createdAt: 'DESC' },
+        });
+    }
 }

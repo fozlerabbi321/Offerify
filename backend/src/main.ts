@@ -1,16 +1,20 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ClassSerializerInterceptor } from '@nestjs/common';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import contentParser from '@fastify/multipart';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
+
+  // Enable CORS
+  app.enableCors();
 
   // Enable Multipart
   // Enable Multipart
@@ -23,7 +27,11 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(app.get(Reflector)),
+    new ResponseInterceptor(),
+  );
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
   // Swagger Configuration
   const config = new DocumentBuilder()

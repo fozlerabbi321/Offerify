@@ -41,7 +41,9 @@ export default function HomeScreen() {
     const { data: categories } = useQuery({
         queryKey: ['categories'],
         queryFn: async () => {
+            console.log('Fetching categories...');
             const res = await api.get('/categories');
+            console.log('Categories data:', res.data);
             return res.data;
         }
     });
@@ -73,7 +75,9 @@ export default function HomeScreen() {
     const { data: smartFeed, refetch, isRefetching } = useQuery({
         queryKey: ['offers', 'smart-feed', cityId],
         queryFn: async () => {
+            console.log('Fetching smart feed...');
             const res = await api.get('/offers', { params: { cityId } });
+            console.log('Smart feed data:', res.data);
             return res.data;
         }
     });

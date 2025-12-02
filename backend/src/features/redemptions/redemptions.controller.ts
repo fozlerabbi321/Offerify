@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Patch, Param, UseGuards, Request, Get } from '@nestjs/common';
 import { RedemptionsService } from './redemptions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -7,6 +7,15 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagg
 @Controller('redemptions')
 export class RedemptionsController {
     constructor(private readonly redemptionsService: RedemptionsService) { }
+
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Get my redemptions' })
+    @ApiResponse({ status: 200, description: 'List of redemptions' })
+    async getMyRedemptions(@Request() req) {
+        return this.redemptionsService.getMyRedemptions(req.user.userId);
+    }
 
     @Post(':offerId/claim')
     @UseGuards(JwtAuthGuard)

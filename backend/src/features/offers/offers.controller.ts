@@ -4,6 +4,7 @@ import type { FastifyRequest } from 'fastify';
 import { OffersService } from './offers.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
+import { GetOffersDto } from './dto/get-offers.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -85,16 +86,8 @@ export class OffersController {
     @Get()
     @ApiOperation({ summary: 'Get offers (Smart Feed)' })
     @ApiResponse({ status: 200, description: 'List of offers' })
-    async findAll(
-        @Query('cityId') cityId?: number,
-        @Query('featured') featured?: boolean,
-        @Query('sort') sort?: 'popularity' | 'newest' | 'price_asc' | 'price_desc',
-        @Query('lat') lat?: number,
-        @Query('long') long?: number,
-        @Query('limit') limit?: number,
-        @Query('categoryId') categoryId?: string,
-    ) {
-        return this.offersService.findAll({ cityId, featured, sort, lat, long, limit, categoryId });
+    async findAll(@Query() query: GetOffersDto) {
+        return this.offersService.findAll(query);
     }
 
     @Get(':id')
