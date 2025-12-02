@@ -15,9 +15,15 @@ const palette = {
     white: '#FFFFFF',
     offWhite: '#F0F2F3',
     gray: '#E1E1E1',
+    gray200: '#EEEEEE',
+    gray400: '#BDBDBD',
+    gray500: '#9E9E9E',
     grayMedium: '#888888',
     darkGray: '#333333',
     transparent: 'transparent',
+
+    secondaryLight: '#E0F2F1',
+    errorLight: '#FFEBEE',
 };
 
 const theme = createTheme({
@@ -28,7 +34,6 @@ const theme = createTheme({
         textInverted: palette.white,
         primary: palette.purplePrimary,
         secondary: palette.greenPrimary,
-        error: palette.error,
         ...palette,
     },
     spacing: {
@@ -57,6 +62,11 @@ const theme = createTheme({
             fontSize: 16,
             lineHeight: 24,
             color: 'text',
+        },
+        caption: {
+            fontSize: 12,
+            lineHeight: 16,
+            color: 'grayMedium',
         },
         defaults: {
             fontSize: 16,

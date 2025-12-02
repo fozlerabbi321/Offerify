@@ -24,7 +24,12 @@ export default function VendorDashboard() {
     return (
         <Box flex={1} backgroundColor="mainBackground" padding="m">
             <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
-                <Text variant="header">Dashboard</Text>
+                <Box>
+                    <Text variant="header">Dashboard</Text>
+                    <TouchableOpacity onPress={() => router.replace('/')}>
+                        <Text color="primary" fontSize={14} marginTop="xs">Switch to Buying</Text>
+                    </TouchableOpacity>
+                </Box>
                 <TouchableOpacity onPress={() => router.push('/(vendor)/post')}>
                     <Box flexDirection="row" alignItems="center" backgroundColor="primary" padding="s" borderRadius={8}>
                         <Ionicons name="add" size={24} color="white" />
