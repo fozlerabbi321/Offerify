@@ -3,22 +3,37 @@ import { ThemeProvider } from '@shopify/restyle';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import theme from '../src/theme/theme';
 import { useAuthStore } from '../src/store/auth.store';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, checkLogin } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        const inAuthGroup = segments[0] === '(auth)';
+        checkLogin();
+        setIsMounted(true);
+    }, []);
 
-        // Simple auth logic: if not authenticated and trying to access protected routes, redirect to login
-        // For now, we allow guest access to tabs, so we don't force login unless needed
-    }, [isAuthenticated, segments]);
+    useEffect(() => {
+        if (!isMounted) return;
+
+        const inAuthGroup = segments[0] === '(auth)';
+        const inVendorGroup = segments[0] === '(vendor)';
+        // Add other protected groups here
+
+        if (isAuthenticated && inAuthGroup) {
+            // Redirect to home if already logged in and trying to access auth screens
+            router.replace('/');
+        } else if (!isAuthenticated && inVendorGroup) {
+            // Redirect to login if trying to access protected routes
+            router.replace('/(auth)/login');
+        }
+    }, [isAuthenticated, segments, isMounted]);
 
     return (
         <QueryClientProvider client={queryClient}>
