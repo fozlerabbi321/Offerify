@@ -146,6 +146,13 @@ export default function TabLayout() {
                             tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />
                         }}
                     />
+                    {/* Hidden tab - accessible via header search icon */}
+                    <Tabs.Screen
+                        name="search"
+                        options={{
+                            href: null, // Hide from tab bar
+                        }}
+                    />
                 </Tabs>
             </Box>
         </Box>
