@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, ScrollView, Image } from 'react-native';
+import { TouchableOpacity, ScrollView, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -114,42 +114,44 @@ export default function AccountScreen() {
                     </Box>
                 </Box>
 
-                {/* Vendor Action Section */}
-                <Box padding="m">
-                    {user.role === 'CUSTOMER' ? (
-                        <TouchableOpacity onPress={() => router.push('/vendor/onboarding')}>
-                            <Box
-                                padding="m"
-                                backgroundColor="secondary"
-                                borderRadius={12}
-                                flexDirection="row"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                style={{ shadowColor: theme.colors.secondary, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
-                            >
-                                <Box>
-                                    <Text color="textInverted" fontWeight="bold" fontSize={16}>Become a Seller</Text>
-                                    <Text color="textInverted" fontSize={12} opacity={0.9}>Start selling your offers today</Text>
+                {/* Vendor Action Section - Only show on native mobile */}
+                {Platform.OS !== 'web' && (
+                    <Box padding="m">
+                        {user.role === 'CUSTOMER' ? (
+                            <TouchableOpacity onPress={() => router.push('/vendor/onboarding')}>
+                                <Box
+                                    padding="m"
+                                    backgroundColor="secondary"
+                                    borderRadius={12}
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    justifyContent="space-between"
+                                    style={{ shadowColor: theme.colors.secondary, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
+                                >
+                                    <Box>
+                                        <Text color="textInverted" fontWeight="bold" fontSize={16}>Become a Seller</Text>
+                                        <Text color="textInverted" fontSize={12} opacity={0.9}>Start selling your offers today</Text>
+                                    </Box>
+                                    <Ionicons name="arrow-forward-circle" size={32} color="white" />
                                 </Box>
-                                <Ionicons name="arrow-forward-circle" size={32} color="white" />
-                            </Box>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={() => router.push('/(vendor)')}>
-                            <Box
-                                padding="m"
-                                backgroundColor="primary"
-                                borderRadius={12}
-                                flexDirection="row"
-                                alignItems="center"
-                                justifyContent="center"
-                            >
-                                <Ionicons name="storefront" size={20} color="white" style={{ marginRight: 8 }} />
-                                <Text color="textInverted" fontWeight="bold">Switch to Vendor Dashboard</Text>
-                            </Box>
-                        </TouchableOpacity>
-                    )}
-                </Box>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity onPress={() => router.push('/(vendor)')}>
+                                <Box
+                                    padding="m"
+                                    backgroundColor="primary"
+                                    borderRadius={12}
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                >
+                                    <Ionicons name="storefront" size={20} color="white" style={{ marginRight: 8 }} />
+                                    <Text color="textInverted" fontWeight="bold">Switch to Vendor Dashboard</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        )}
+                    </Box>
+                )}
 
                 {/* Menu Actions */}
                 <Box paddingHorizontal="m" marginTop="s">

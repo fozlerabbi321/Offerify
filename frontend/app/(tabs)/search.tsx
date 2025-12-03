@@ -4,13 +4,14 @@ import { useRouter, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../src/theme/theme';
-import Box from '../src/components/ui/Box';
-import Text from '../src/components/ui/Text';
-import api from '../src/lib/api';
-import OfferCard from '../src/components/home/OfferCard';
-import { useLocationStore } from '../src/store/location.store';
-import ResponsiveGrid from '../src/components/ui/ResponsiveGrid';
+import { Theme } from '../../src/theme/theme';
+import Box from '../../src/components/ui/Box';
+import Text from '../../src/components/ui/Text';
+import api from '../../src/lib/api';
+import OfferCard from '../../src/components/home/OfferCard';
+import { useLocationStore } from '../../src/store/location.store';
+import { useAuthStore } from '../../src/store/auth.store';
+import ResponsiveGrid from '../../src/components/ui/ResponsiveGrid';
 import { ScrollView } from 'react-native';
 
 const useDebounce = (value: string, delay: number) => {
@@ -31,10 +32,6 @@ const useDebounce = (value: string, delay: number) => {
 
 const fetchSearchResults = async (query: string, cityId: number | null) => {
     if (!query) return [];
-    // Assuming backend supports ?search=... or we filter on frontend for now if not
-    // Ideally: GET /offers?search=query&cityId=...
-    // If backend doesn't support search param yet, we might need to fetch all and filter (inefficient but works for prototype)
-    // Let's assume we pass a 'search' param. If backend ignores it, we'll get all offers, which is okay for now.
     const response = await api.get('/offers', { params: { cityId, search: query } });
     return response.data;
 };
@@ -43,6 +40,7 @@ export default function SearchScreen() {
     const theme = useTheme<Theme>();
     const router = useRouter();
     const { cityId } = useLocationStore();
+    const { user, isAuthenticated } = useAuthStore();
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedQuery = useDebounce(searchQuery, 500);
 
@@ -51,6 +49,10 @@ export default function SearchScreen() {
         queryFn: () => fetchSearchResults(debouncedQuery, cityId),
         enabled: !!debouncedQuery,
     });
+
+    const getInitials = (email: string) => {
+        return email.substring(0, 1).toUpperCase();
+    };
 
     return (
         <Box flex={1} backgroundColor="mainBackground">
@@ -88,6 +90,35 @@ export default function SearchScreen() {
                         </TouchableOpacity>
                     )}
                 </Box>
+
+                {/* Login/Profile Avatar */}
+                {isAuthenticated && user ? (
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/account')} style={{ marginLeft: 12 }}>
+                        <Box
+                            width={40}
+                            height={40}
+                            borderRadius={20}
+                            backgroundColor="primary"
+                            alignItems="center"
+                            justifyContent="center"
+                        >
+                            <Text color="textInverted" fontWeight="bold" fontSize={16}>
+                                {getInitials(user.email)}
+                            </Text>
+                        </Box>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={{ marginLeft: 12 }}>
+                        <Box
+                            paddingHorizontal="m"
+                            paddingVertical="s"
+                            backgroundColor="primary"
+                            borderRadius={8}
+                        >
+                            <Text color="textInverted" fontWeight="600" fontSize={14}>Login</Text>
+                        </Box>
+                    </TouchableOpacity>
+                )}
             </Box>
 
             {/* Results */}
