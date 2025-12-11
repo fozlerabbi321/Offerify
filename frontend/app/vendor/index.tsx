@@ -30,7 +30,7 @@ export default function VendorDashboard() {
                         <Text color="primary" fontSize={14} marginTop="xs">Switch to Buying</Text>
                     </TouchableOpacity>
                 </Box>
-                <TouchableOpacity onPress={() => router.push('/(vendor)/post')}>
+                <TouchableOpacity onPress={() => router.push('/vendor/post')}>
                     <Box flexDirection="row" alignItems="center" backgroundColor="primary" padding="s" borderRadius={8}>
                         <Ionicons name="add" size={24} color="white" />
                         <Text color="textInverted" fontWeight="bold" marginLeft="xs">New Offer</Text>
@@ -83,7 +83,7 @@ export default function VendorDashboard() {
 
             <Text variant="subheader" marginBottom="m">Quick Actions</Text>
             <Box flexDirection="row" justifyContent="space-between">
-                <TouchableOpacity onPress={() => router.push('/(vendor)/scan')} style={{ width: '48%' }}>
+                <TouchableOpacity onPress={() => router.push('/vendor/scan')} style={{ width: '48%' }}>
                     <Box
                         backgroundColor="white"
                         padding="m"
@@ -95,7 +95,7 @@ export default function VendorDashboard() {
                         <Text marginTop="s" fontWeight="bold">Scan QR</Text>
                     </Box>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/(vendor)/post')} style={{ width: '48%' }}>
+                <TouchableOpacity onPress={() => router.push('/vendor/post')} style={{ width: '48%' }}>
                     <Box
                         backgroundColor="white"
                         padding="m"

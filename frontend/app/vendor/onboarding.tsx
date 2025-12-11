@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, TouchableOpacity, Modal, FlatList, Alert, TextInput as RNTextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,12 +55,20 @@ const fetchCities = async () => {
 
 export default function VendorOnboardingScreen() {
     const router = useRouter();
-    const { user, checkLogin } = useAuthStore();
+    const { user, checkLogin, refreshUser } = useAuthStore();
     const [isCityModalVisible, setCityModalVisible] = useState(false);
     const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [logoUri, setLogoUri] = useState<string | null>(null);
+
+    // Redirect if user is already a vendor - only on this specific onboarding page
+    useEffect(() => {
+        if (user?.role?.toUpperCase() === 'VENDOR') {
+            // Silently redirect vendors to their dashboard
+            router.replace('/vendor');
+        }
+    }, [user, router]);
 
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<OnboardingFormData>({
         defaultValues: {
@@ -125,17 +133,29 @@ export default function VendorOnboardingScreen() {
             });
 
             // Refresh user profile to get the new role
-            checkLogin();
+            await refreshUser();
 
             Alert.alert('Success', 'Your vendor profile has been created!', [
                 {
                     text: 'Go to Dashboard',
-                    onPress: () => router.replace('/(vendor)'),
+                    onPress: () => router.replace('/vendor'),
                 },
             ]);
         } catch (error: any) {
             console.error('Onboarding error:', error);
-            Alert.alert('Error', error.response?.data?.message || 'Failed to create vendor profile');
+
+            // If user already has a vendor profile (409 Conflict), redirect to dashboard
+            if (error.response?.status === 409) {
+                await refreshUser(); // Refresh user data to get vendor role
+                Alert.alert('Already a Vendor', 'You already have a vendor profile.', [
+                    {
+                        text: 'Go to Dashboard',
+                        onPress: () => router.replace('/vendor'),
+                    },
+                ]);
+            } else {
+                Alert.alert('Error', error.response?.data?.message || 'Failed to create vendor profile');
+            }
         }
     };
 
@@ -153,243 +173,250 @@ export default function VendorOnboardingScreen() {
 
     return (
         <Container>
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-                <Box flexDirection="row" alignItems="center" marginBottom="l">
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <Text variant="header" marginLeft="m">Become a Seller</Text>
-                </Box>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40, alignItems: 'center' }}>
+                <Box
+                    width="100%"
+                    style={{ maxWidth: 600 }}
+                    paddingHorizontal="m"
+                    paddingVertical="m"
+                >
+                    <Box flexDirection="row" alignItems="center" marginBottom="l">
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                        <Text variant="header" marginLeft="m">Become a Seller</Text>
+                    </Box>
 
-                <Text variant="body" color="gray500" marginBottom="xl">
-                    Create your business profile to start selling on Offerify.
-                </Text>
+                    <Text variant="body" color="gray500" marginBottom="xl">
+                        Create your business profile to start selling on Offerify.
+                    </Text>
 
-                {/* Logo Upload */}
-                <Box marginBottom="l" alignItems="center">
-                    <Text variant="subheader" marginBottom="s" fontSize={16}>Business Logo</Text>
-                    <TouchableOpacity onPress={pickImage}>
-                        <Box
-                            width={120}
-                            height={120}
-                            borderRadius={60}
-                            backgroundColor="offWhite"
-                            borderWidth={2}
-                            borderColor="gray200"
-                            alignItems="center"
-                            justifyContent="center"
-                            style={{ overflow: 'hidden' }}
-                        >
-                            {logoUri ? (
-                                <img src={logoUri} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Logo" />
-                            ) : (
-                                <Ionicons name="camera" size={40} color={theme.colors.grayMedium} />
-                            )}
-                        </Box>
-                    </TouchableOpacity>
-                    <Text variant="caption" color="gray500" marginTop="s">Tap to upload logo</Text>
-                </Box>
-
-                {/* Business Name */}
-                <Box marginBottom="m">
-                    <Controller
-                        control={control}
-                        rules={{ required: 'Business Name is required' }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Business Name"
-                                placeholder="Enter your business name"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.businessName?.message}
-                            />
-                        )}
-                        name="businessName"
-                    />
-                </Box>
-
-                {/* Phone Number */}
-                <Box marginBottom="m">
-                    <Controller
-                        control={control}
-                        rules={{
-                            required: 'Phone number is required',
-                            pattern: {
-                                value: /^[0-9+\-\s()]+$/,
-                                message: 'Invalid phone number'
-                            }
-                        }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Phone Number"
-                                placeholder="+1 (555) 123-4567"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.phone?.message}
-                                keyboardType="phone-pad"
-                            />
-                        )}
-                        name="phone"
-                    />
-                </Box>
-
-                {/* Business Description */}
-                <Box marginBottom="m">
-                    <Controller
-                        control={control}
-                        rules={{
-                            required: 'Business description is required',
-                            minLength: {
-                                value: 20,
-                                message: 'Description must be at least 20 characters'
-                            }
-                        }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Box>
-                                <Text variant="subheader" marginBottom="s" fontSize={16}>Business Description</Text>
-                                <Box
-                                    backgroundColor="white"
-                                    borderWidth={1}
-                                    borderColor={errors.description ? 'error' : 'gray200'}
-                                    borderRadius={8}
-                                    padding="m"
-                                >
-                                    <RNTextInput
-                                        style={{
-                                            height: 100,
-                                            textAlignVertical: 'top',
-                                            color: theme.colors.text,
-                                            fontSize: 16,
-                                            outlineStyle: 'none'
-                                        } as any}
-                                        placeholder="Describe your business, products, or services..."
-                                        placeholderTextColor={theme.colors.grayMedium}
-                                        multiline
-                                        numberOfLines={4}
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
-                                </Box>
-                                {errors.description && (
-                                    <Text color="error" variant="caption" marginTop="xs">
-                                        {errors.description.message}
-                                    </Text>
+                    {/* Logo Upload */}
+                    <Box marginBottom="l" alignItems="center">
+                        <Text variant="subheader" marginBottom="s" fontSize={16}>Business Logo</Text>
+                        <TouchableOpacity onPress={pickImage}>
+                            <Box
+                                width={120}
+                                height={120}
+                                borderRadius={60}
+                                backgroundColor="offWhite"
+                                borderWidth={2}
+                                borderColor="gray200"
+                                alignItems="center"
+                                justifyContent="center"
+                                style={{ overflow: 'hidden' }}
+                            >
+                                {logoUri ? (
+                                    <img src={logoUri} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Logo" />
+                                ) : (
+                                    <Ionicons name="camera" size={40} color={theme.colors.grayMedium} />
                                 )}
                             </Box>
-                        )}
-                        name="description"
-                    />
-                </Box>
+                        </TouchableOpacity>
+                        <Text variant="caption" color="gray500" marginTop="s">Tap to upload logo</Text>
+                    </Box>
 
-                {/* Category */}
-                <Box marginBottom="m">
-                    <Text variant="subheader" marginBottom="s" fontSize={16}>Business Category</Text>
-                    <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
-                        <Box
-                            padding="m"
-                            borderWidth={1}
-                            borderColor="gray200"
-                            borderRadius={8}
-                            flexDirection="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            backgroundColor="white"
-                        >
-                            <Text color={selectedCategory ? 'text' : 'gray400'}>
-                                {selectedCategory || 'Select category'}
-                            </Text>
-                            <Ionicons name="chevron-down" size={20} color={theme.colors.gray400} />
-                        </Box>
-                    </TouchableOpacity>
-                </Box>
-
-                {/* Address */}
-                <Box marginBottom="m">
-                    <Controller
-                        control={control}
-                        rules={{ required: 'Address is required' }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Address"
-                                placeholder="Enter your business address"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.address?.message}
-                            />
-                        )}
-                        name="address"
-                    />
-                </Box>
-
-                {/* Business Hours */}
-                <Box marginBottom="m">
-                    <Controller
-                        control={control}
-                        rules={{ required: 'Business hours are required' }}
-                        render={({ field: { onChange, onBlur, value } }) => (
-                            <Input
-                                label="Business Hours"
-                                placeholder="e.g., Mon-Fri: 9AM-6PM, Sat: 10AM-4PM"
-                                onBlur={onBlur}
-                                onChangeText={onChange}
-                                value={value}
-                                error={errors.businessHours?.message}
-                            />
-                        )}
-                        name="businessHours"
-                    />
-                </Box>
-
-                {/* City */}
-                <Box marginBottom="l">
-                    <Text variant="subheader" marginBottom="s" fontSize={16}>City</Text>
-                    <TouchableOpacity onPress={() => setCityModalVisible(true)}>
-                        <Box
-                            padding="m"
-                            borderWidth={1}
-                            borderColor="gray200"
-                            borderRadius={8}
-                            flexDirection="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            backgroundColor="white"
-                        >
-                            <Text color={selectedCity ? 'text' : 'gray400'}>
-                                {selectedCity ? selectedCity.name : 'Select your city'}
-                            </Text>
-                            <Ionicons name="chevron-down" size={20} color={theme.colors.gray400} />
-                        </Box>
-                    </TouchableOpacity>
-                </Box>
-
-                {selectedCity && (
-                    <Box marginBottom="l">
-                        <Text variant="subheader" marginBottom="s" fontSize={16}>Location Preview</Text>
-                        <OfferMapPreview
-                            latitude={selectedCity.centerPoint.coordinates[1]}
-                            longitude={selectedCity.centerPoint.coordinates[0]}
+                    {/* Business Name */}
+                    <Box marginBottom="m">
+                        <Controller
+                            control={control}
+                            rules={{ required: 'Business Name is required' }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <Input
+                                    label="Business Name"
+                                    placeholder="Enter your business name"
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    error={errors.businessName?.message}
+                                />
+                            )}
+                            name="businessName"
                         />
-                        <Text variant="caption" color="gray500" marginTop="s">
-                            Your offers will be visible to users in {selectedCity.name}.
-                        </Text>
                     </Box>
-                )}
 
-                <TouchableOpacity onPress={handleSubmit(onSubmit)}>
-                    <Box
-                        padding="m"
-                        backgroundColor="primary"
-                        borderRadius={12}
-                        alignItems="center"
-                        marginTop="m"
-                    >
-                        <Text color="textInverted" fontWeight="bold" fontSize={16}>Create Business Profile</Text>
+                    {/* Phone Number */}
+                    <Box marginBottom="m">
+                        <Controller
+                            control={control}
+                            rules={{
+                                required: 'Phone number is required',
+                                pattern: {
+                                    value: /^[0-9+\-\s()]+$/,
+                                    message: 'Invalid phone number'
+                                }
+                            }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <Input
+                                    label="Phone Number"
+                                    placeholder="+1 (555) 123-4567"
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    error={errors.phone?.message}
+                                    keyboardType="phone-pad"
+                                />
+                            )}
+                            name="phone"
+                        />
                     </Box>
-                </TouchableOpacity>
+
+                    {/* Business Description */}
+                    <Box marginBottom="m">
+                        <Controller
+                            control={control}
+                            rules={{
+                                required: 'Business description is required',
+                                minLength: {
+                                    value: 20,
+                                    message: 'Description must be at least 20 characters'
+                                }
+                            }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <Box>
+                                    <Text variant="subheader" marginBottom="s" fontSize={16}>Business Description</Text>
+                                    <Box
+                                        backgroundColor="white"
+                                        borderWidth={1}
+                                        borderColor={errors.description ? 'error' : 'gray200'}
+                                        borderRadius={8}
+                                        padding="m"
+                                    >
+                                        <RNTextInput
+                                            style={{
+                                                height: 100,
+                                                textAlignVertical: 'top',
+                                                color: theme.colors.text,
+                                                fontSize: 16,
+                                                outlineStyle: 'none'
+                                            } as any}
+                                            placeholder="Describe your business, products, or services..."
+                                            placeholderTextColor={theme.colors.grayMedium}
+                                            multiline
+                                            numberOfLines={4}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                        />
+                                    </Box>
+                                    {errors.description && (
+                                        <Text color="error" variant="caption" marginTop="xs">
+                                            {errors.description.message}
+                                        </Text>
+                                    )}
+                                </Box>
+                            )}
+                            name="description"
+                        />
+                    </Box>
+
+                    {/* Category */}
+                    <Box marginBottom="m">
+                        <Text variant="subheader" marginBottom="s" fontSize={16}>Business Category</Text>
+                        <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+                            <Box
+                                padding="m"
+                                borderWidth={1}
+                                borderColor="gray200"
+                                borderRadius={8}
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                backgroundColor="white"
+                            >
+                                <Text color={selectedCategory ? 'text' : 'gray400'}>
+                                    {selectedCategory || 'Select category'}
+                                </Text>
+                                <Ionicons name="chevron-down" size={20} color={theme.colors.gray400} />
+                            </Box>
+                        </TouchableOpacity>
+                    </Box>
+
+                    {/* Address */}
+                    <Box marginBottom="m">
+                        <Controller
+                            control={control}
+                            rules={{ required: 'Address is required' }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <Input
+                                    label="Address"
+                                    placeholder="Enter your business address"
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    error={errors.address?.message}
+                                />
+                            )}
+                            name="address"
+                        />
+                    </Box>
+
+                    {/* Business Hours */}
+                    <Box marginBottom="m">
+                        <Controller
+                            control={control}
+                            rules={{ required: 'Business hours are required' }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <Input
+                                    label="Business Hours"
+                                    placeholder="e.g., Mon-Fri: 9AM-6PM, Sat: 10AM-4PM"
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                    error={errors.businessHours?.message}
+                                />
+                            )}
+                            name="businessHours"
+                        />
+                    </Box>
+
+                    {/* City */}
+                    <Box marginBottom="l">
+                        <Text variant="subheader" marginBottom="s" fontSize={16}>City</Text>
+                        <TouchableOpacity onPress={() => setCityModalVisible(true)}>
+                            <Box
+                                padding="m"
+                                borderWidth={1}
+                                borderColor="gray200"
+                                borderRadius={8}
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                backgroundColor="white"
+                            >
+                                <Text color={selectedCity ? 'text' : 'gray400'}>
+                                    {selectedCity ? selectedCity.name : 'Select your city'}
+                                </Text>
+                                <Ionicons name="chevron-down" size={20} color={theme.colors.gray400} />
+                            </Box>
+                        </TouchableOpacity>
+                    </Box>
+
+                    {selectedCity && (
+                        <Box marginBottom="l">
+                            <Text variant="subheader" marginBottom="s" fontSize={16}>Location Preview</Text>
+                            <OfferMapPreview
+                                latitude={selectedCity.centerPoint.coordinates[1]}
+                                longitude={selectedCity.centerPoint.coordinates[0]}
+                            />
+                            <Text variant="caption" color="gray500" marginTop="s">
+                                Your offers will be visible to users in {selectedCity.name}.
+                            </Text>
+                        </Box>
+                    )}
+
+                    <TouchableOpacity onPress={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+                        <Box
+                            padding="m"
+                            backgroundColor="primary"
+                            borderRadius={12}
+                            alignItems="center"
+                            marginTop="m"
+                        >
+                            <Text color="textInverted" fontWeight="bold" fontSize={16}>Create Business Profile</Text>
+                        </Box>
+                    </TouchableOpacity>
+                </Box>
             </ScrollView>
 
             {/* City Modal */}

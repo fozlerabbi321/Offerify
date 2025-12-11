@@ -21,7 +21,7 @@ export default function TabLayout() {
         if (!isAuthenticated) {
             router.push('/(auth)/login');
         } else if (user?.role?.toUpperCase() === 'VENDOR') {
-            router.push('/(vendor)/post');
+            router.push('/vendor/post');
         } else {
             router.push('/vendor/onboarding');
         }

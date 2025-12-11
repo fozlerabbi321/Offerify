@@ -3,6 +3,7 @@ import { Platform, useWindowDimensions } from 'react-native';
 import Navbar from '../../src/components/web/Navbar';
 import Sidebar from '../../src/components/web/Sidebar';
 import Box from '../../src/components/ui/Box';
+import MobileHeader from '../../src/components/home/MobileHeader';
 
 export default function VendorLayout() {
     const { width } = useWindowDimensions();
@@ -14,8 +15,13 @@ export default function VendorLayout() {
             {isWeb && isDesktop && <Sidebar />}
             <Box flex={1}>
                 {isWeb && isDesktop && <Navbar />}
-                <Stack screenOptions={{ headerShown: !isDesktop }}>
+                {!isDesktop && <MobileHeader title="Vendor" variant="standard" />}
+                <Stack
+                    screenOptions={{ headerShown: false }}
+                    initialRouteName="index"
+                >
                     <Stack.Screen name="index" options={{ title: 'Vendor Dashboard' }} />
+                    <Stack.Screen name="onboarding" options={{ title: 'Become a Seller' }} />
                     <Stack.Screen name="post" options={{ title: 'Create Offer' }} />
                     <Stack.Screen name="scan" options={{ title: 'Scan QR' }} />
                 </Stack>

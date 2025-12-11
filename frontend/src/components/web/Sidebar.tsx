@@ -46,7 +46,7 @@ const VendorButton = () => {
 
     const handlePress = () => {
         if (isVendor) {
-            router.push('/(vendor)');
+            router.push('/vendor');
         } else {
             router.push('/vendor/onboarding');
         }
