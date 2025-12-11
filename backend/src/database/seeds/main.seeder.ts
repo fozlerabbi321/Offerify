@@ -82,10 +82,10 @@ async function seed() {
         console.log('🏷️ Seeding Categories...');
         const categoryRepo = dataSource.getRepository(Category);
         const categoriesData = [
-            { name: 'Food', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80' },
-            { name: 'Electronics', image: 'https://images.unsplash.com/photo-1498049860654-af1a5c5668ba?auto=format&fit=crop&w=800&q=80' },
-            { name: 'Fashion', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80' },
-            { name: 'Lifestyle', image: 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=800&q=80' },
+            { name: 'Food', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' },
+            { name: 'Electronics', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400' },
+            { name: 'Fashion', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400' },
+            { name: 'Lifestyle', image: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=400' },
         ];
 
         const categories: Record<string, Category> = {};
@@ -93,7 +93,7 @@ async function seed() {
             categories[cat.name] = await categoryRepo.save({
                 name: cat.name,
                 slug: cat.name.toLowerCase(),
-                icon: cat.image // Using image as icon for now
+                iconPath: cat.image // Store external URL directly in iconPath
             });
         }
 
@@ -163,7 +163,7 @@ async function seed() {
                 type: OfferType.DISCOUNT,
                 vendorIndex: 0,
                 discountPercentage: 15,
-                image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&w=800&q=80'
+                image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800'
             },
             {
                 title: '50% Off on Accessories',
@@ -171,7 +171,7 @@ async function seed() {
                 type: OfferType.DISCOUNT,
                 vendorIndex: 1,
                 discountPercentage: 50,
-                image: 'https://images.unsplash.com/photo-1603539278716-4a92917d098e?auto=format&fit=crop&w=800&q=80'
+                image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800'
             },
             {
                 title: 'Eid Collection Voucher',
@@ -179,7 +179,7 @@ async function seed() {
                 type: OfferType.VOUCHER,
                 vendorIndex: 2,
                 voucherValue: 1000,
-                image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80'
+                image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800'
             },
             {
                 title: 'Buy 1 Get 1 Free',
@@ -187,7 +187,7 @@ async function seed() {
                 type: OfferType.COUPON,
                 vendorIndex: 0,
                 couponCode: 'BOGO2025',
-                image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=800&q=80'
+                image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=800'
             },
             {
                 title: 'MacBook Pro Special',
@@ -196,21 +196,65 @@ async function seed() {
                 vendorIndex: 1,
                 discountPercentage: 10,
                 featured: true,
-                image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?auto=format&fit=crop&w=800&q=80'
+                image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=800'
+            },
+            {
+                title: 'Weekend Pizza Special',
+                description: 'Family size pizza with unlimited toppings at amazing prices.',
+                type: OfferType.DISCOUNT,
+                vendorIndex: 0,
+                discountPercentage: 25,
+                image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800'
+            },
+            {
+                title: 'AirPods Pro Deal',
+                description: 'Get the latest AirPods Pro with noise cancellation.',
+                type: OfferType.VOUCHER,
+                vendorIndex: 1,
+                voucherValue: 2000,
+                image: 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=800'
+            },
+            {
+                title: 'Summer Fashion Sale',
+                description: 'Exclusive summer collection with up to 40% off.',
+                type: OfferType.DISCOUNT,
+                vendorIndex: 2,
+                discountPercentage: 40,
+                image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800'
+            },
+            {
+                title: 'Coffee & Dessert Combo',
+                description: 'Premium coffee with your favorite dessert.',
+                type: OfferType.COUPON,
+                vendorIndex: 0,
+                couponCode: 'COFFEE2025',
+                image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800'
+            },
+            {
+                title: 'Smartwatch Collection',
+                description: 'Latest smartwatches with fitness tracking features.',
+                type: OfferType.DISCOUNT,
+                vendorIndex: 1,
+                discountPercentage: 20,
+                image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'
+            },
+            {
+                title: 'Designer Handbags',
+                description: 'Premium designer handbags for every occasion.',
+                type: OfferType.VOUCHER,
+                vendorIndex: 2,
+                voucherValue: 1500,
+                image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800'
+            },
+            {
+                title: 'Gaming Headset Promo',
+                description: 'Professional gaming headsets with surround sound.',
+                type: OfferType.DISCOUNT,
+                vendorIndex: 1,
+                discountPercentage: 30,
+                image: 'https://images.unsplash.com/photo-1599669454699-248893623440?w=800'
             }
         ];
-
-        // Generate more dummy offers to reach 10-15
-        for (let i = 0; i < 7; i++) {
-            offersData.push({
-                title: `Special Offer ${i + 1}`,
-                description: 'Limited time offer! Grab it now.',
-                type: OfferType.DISCOUNT,
-                vendorIndex: i % 3,
-                discountPercentage: 10 + (i * 5),
-                image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80'
-            } as any);
-        }
 
         for (const o of offersData) {
             const vendor = vendors[o.vendorIndex];
@@ -226,25 +270,8 @@ async function seed() {
                 isActive: true,
                 featured: o.featured || false,
                 views: Math.floor(Math.random() * 5000),
-                imagePath: o.image.replace('http://localhost:3000', ''), // Hack for now, usually we store relative path
-                // But wait, the entity getter prepends the URL. 
-                // If I store full URL in imagePath, the getter will double it.
-                // I should probably just store the full URL in imagePath and adjust the entity getter or just store a dummy path.
-                // The entity getter: return `${process.env.APP_URL}${this.imagePath}`;
-                // So I should store a path like '/uploads/seed/image.jpg'.
-                // But I want to use Unsplash.
-                // I will store the Unsplash URL directly and maybe the entity getter will mess it up if I don't handle it.
-                // Let's check the entity getter again.
-                // `return `${process.env.APP_URL || 'http://localhost:3000'}${this.imagePath}`;`
-                // It blindly prepends. 
-                // I will override the getter or just set imagePath to something that works?
-                // Actually, I can't easily change the entity logic here without modifying the entity file.
-                // I will modify the entity file to check if imagePath starts with http.
+                imagePath: o.image // Store external URL directly (entity getter now handles it)
             };
-
-            // Fix for image path in entity
-            // I will modify the Offer entity in a separate step to handle absolute URLs.
-            // For now, I will just store it.
 
             if (o.type === OfferType.DISCOUNT) {
                 await discountRepo.save({ ...baseOffer, discountPercentage: o.discountPercentage });
@@ -253,6 +280,108 @@ async function seed() {
             } else if (o.type === OfferType.COUPON) {
                 await couponRepo.save({ ...baseOffer, couponCode: o.couponCode });
             }
+        }
+
+        // Step E: Customers (Buyers)
+        console.log('🙋 Seeding Customers...');
+        const customer1 = await userRepo.save({
+            email: 'customer1@test.com',
+            passwordHash,
+            role: UserRole.CUSTOMER
+        });
+
+        const customer2 = await userRepo.save({
+            email: 'customer2@test.com',
+            passwordHash,
+            role: UserRole.CUSTOMER
+        });
+
+        // Step F: Redemptions (Populate Wallet & Stats)
+        console.log('🎟️ Seeding Redemptions...');
+        const redemptionRepo = dataSource.getRepository(OfferRedemption);
+
+        // Fetch offers from database to get their IDs
+        const allOffers = await offerRepo.find({ relations: ['vendor'] });
+        const voucherOffers = allOffers.filter(o => o.type === OfferType.VOUCHER);
+        const couponOffers = allOffers.filter(o => o.type === OfferType.COUPON);
+
+        // Customer1 claims 3 offers (2 vouchers, 1 coupon)
+        if (voucherOffers.length >= 2 && couponOffers.length >= 1) {
+            const claimedOffers = [
+                voucherOffers[0],
+                voucherOffers[1],
+                couponOffers[0]
+            ];
+
+            for (const offer of claimedOffers) {
+                await redemptionRepo.save({
+                    offer,
+                    user: customer1,
+                    isUsed: false
+                });
+
+                // Manually increment voucherClaimedCount
+                offer.voucherClaimedCount = (offer.voucherClaimedCount || 0) + 1;
+                await offerRepo.save(offer);
+            }
+        }
+
+        // Customer2 claims 1 offer
+        if (voucherOffers.length >= 1) {
+            const offer = voucherOffers[0]; // Same voucher as customer1
+            await redemptionRepo.save({
+                offer,
+                user: customer2,
+                isUsed: false
+            });
+
+            // Manually increment voucherClaimedCount
+            offer.voucherClaimedCount = (offer.voucherClaimedCount || 0) + 1;
+            await offerRepo.save(offer);
+        }
+
+        // Step G: Reviews (Populate Engagement)
+        console.log('⭐ Seeding Reviews...');
+        const reviewRepo = dataSource.getRepository(Review);
+
+        // Customer1 leaves 5-star review for Burger King
+        const burgerKingVendor = vendors.find(v => v.businessName === 'Burger King');
+        if (burgerKingVendor) {
+            await reviewRepo.save({
+                userId: customer1.id,
+                vendorId: burgerKingVendor.id,
+                rating: 5,
+                comment: 'Amazing food quality! The Whopper is the best burger in town. Fast service and friendly staff.',
+                user: customer1,
+                vendor: burgerKingVendor
+            });
+
+            // Update Burger King stats
+            const burgerKingReviews = await reviewRepo.find({ where: { vendorId: burgerKingVendor.id } });
+            const avgRating = burgerKingReviews.reduce((sum, r) => sum + r.rating, 0) / burgerKingReviews.length;
+            burgerKingVendor.ratingAvg = parseFloat(avgRating.toFixed(2));
+            burgerKingVendor.reviewCount = burgerKingReviews.length;
+            await vendorRepo.save(burgerKingVendor);
+        }
+
+        // Customer2 leaves 4-star review for Apple Gadgets
+        const appleGadgetsVendor = vendors.find(v => v.businessName === 'Apple Gadgets');
+        if (appleGadgetsVendor) {
+            await reviewRepo.save({
+                userId: customer2.id,
+                vendorId: appleGadgetsVendor.id,
+                rating: 4,
+                comment: 'Great products and good deals. The accessories are genuine. Could improve delivery time.',
+                user: customer2,
+                vendor: appleGadgetsVendor
+            });
+
+            // Update Apple Gadgets stats
+            const appleReviews = await reviewRepo.find({ where: { vendorId: appleGadgetsVendor.id } });
+            const avgRating = appleReviews.reduce((sum, r) => sum + r.rating, 0) / appleReviews.length;
+            appleGadgetsVendor.ratingAvg = parseFloat(avgRating.toFixed(2));
+            appleGadgetsVendor.reviewCount = appleReviews.length;
+            await vendorRepo.save(appleGadgetsVendor);
         }
 
         console.log('✅ Seeding Complete!');

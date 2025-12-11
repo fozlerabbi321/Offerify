@@ -48,7 +48,8 @@ export class Offer {
     @Expose()
     get image(): string | null {
         if (!this.imagePath) return null;
-        return `${process.env.APP_URL || 'http://localhost:3000'}${this.imagePath}`;
+        if (this.imagePath.startsWith('http')) return this.imagePath; // External URL
+        return `${process.env.APP_URL || 'http://localhost:3000'}/${this.imagePath}`; // Local path
     }
 
     @ManyToOne(() => VendorProfile, (vendor) => vendor.offers)

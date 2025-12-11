@@ -19,7 +19,8 @@ export class Category {
     @Expose()
     get icon(): string | null {
         if (!this.iconPath) return null;
-        return `${process.env.APP_URL || 'http://localhost:3000'}${this.iconPath}`;
+        if (this.iconPath.startsWith('http')) return this.iconPath; // External URL
+        return `${process.env.APP_URL || 'http://localhost:3000'}/${this.iconPath}`; // Local path
     }
 
     @CreateDateColumn()

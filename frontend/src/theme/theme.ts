@@ -21,6 +21,7 @@ const palette = {
     grayMedium: '#888888',
     darkGray: '#333333',
     transparent: 'transparent',
+    modalBackground: 'rgba(0,0,0,0.5)',
 
     secondaryLight: '#E0F2F1',
     errorLight: '#FFEBEE',
