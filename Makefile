@@ -61,13 +61,19 @@ setup: check-env install docker-up migrate seed ## Complete setup (env + install
 	@echo "  make dev-backend  # Run backend only"
 	@echo "  make dev-frontend # Run frontend only"
 
-test: ## Run backend tests
-	@echo "$(CYAN)Running tests...$(NC)"
+test-unit: ## Run backend unit tests only
+	@echo "$(CYAN)Running unit tests...$(NC)"
 	@cd backend && npm test
-	@cd backend && npm run test:e2e
-	@echo "$(GREEN)✓ Tests passed$(NC)"
+	@echo "$(GREEN)✓ Unit tests passed$(NC)"
 
-dev: setup test ## Full development workflow (setup + test + run)
+test-e2e: ## Run backend E2E tests
+	@echo "$(CYAN)Running E2E tests...$(NC)"
+	@cd backend && npm run test:e2e
+	@echo "$(GREEN)✓ E2E tests passed$(NC)"
+
+test: test-unit test-e2e ## Run all backend tests (unit + E2E)
+
+dev: setup test-unit ## Full development workflow (setup + unit tests + run)
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "$(GREEN)Starting development servers...$(NC)"
 	@echo "$(GREEN)========================================$(NC)"
