@@ -27,13 +27,21 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
             showsMyLocationButton
         >
             {offers?.map((offer: any) => {
-                if (!offer.latitude || !offer.longitude) return null;
+                // Extract coordinates from vendor location or city center (PostGIS Point format)
+                const coordinates = offer.vendor?.location?.coordinates ||
+                    offer.city?.centerPoint?.coordinates;
+
+                if (!coordinates || coordinates.length !== 2) return null;
+
+                // GeoJSON format is [longitude, latitude]
+                const [longitude, latitude] = coordinates;
+
                 return (
                     <Marker
                         key={offer.id}
                         coordinate={{
-                            latitude: parseFloat(offer.latitude),
-                            longitude: parseFloat(offer.longitude),
+                            latitude: parseFloat(latitude),
+                            longitude: parseFloat(longitude),
                         }}
                         onCalloutPress={() => router.push(`/offer/${offer.id}`)}
                     >
@@ -43,7 +51,9 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
                                     {offer.title}
                                 </Text>
                                 <Text variant="body" color="primary">
-                                    ${offer.discountedPrice || offer.price}
+                                    {offer.type === 'discount' && `${offer.discountPercentage}% OFF`}
+                                    {offer.type === 'voucher' && `${offer.voucherValue} BDT OFF`}
+                                    {offer.type === 'coupon' && `Code: ${offer.couponCode}`}
                                 </Text>
                                 <Text variant="body" fontSize={12} color="gray">
                                     Tap to view details

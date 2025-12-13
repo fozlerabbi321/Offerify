@@ -11,8 +11,22 @@ import theme from '../../src/theme/theme';
 import AuthWrapper from '../../src/components/auth/AuthWrapper';
 
 const fetchFavorites = async () => {
-    const response = await api.get('/account/favorites');
-    return response.data.data;
+    try {
+        const response = await api.get('/account/favorites');
+        console.log('Favorites API response:', response);
+        console.log('Favorites data:', response.data);
+
+        // Handle both wrapped ({ data: { data: [...] } }) and unwrapped ({ data: [...] }) responses
+        const favorites = Array.isArray(response.data)
+            ? response.data
+            : (response.data.data || []);
+
+        console.log('Extracted favorites:', favorites);
+        return favorites;
+    } catch (error) {
+        console.error('Failed to fetch favorites:', error);
+        return [];
+    }
 };
 
 function SavedScreenContent() {
@@ -64,7 +78,7 @@ function SavedScreenContent() {
                 <FlatList
                     data={favorites}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => item.offerId}
                     ListEmptyComponent={<Text>No saved items yet.</Text>}
                 />
             )}

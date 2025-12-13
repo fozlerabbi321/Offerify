@@ -37,19 +37,31 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {offers?.map((offer) => (
-                    offer.latitude && offer.longitude ? (
+                {offers?.map((offer) => {
+                    // Extract coordinates from vendor location or city center (PostGIS Point format)
+                    const coordinates = offer.vendor?.location?.coordinates ||
+                        offer.city?.centerPoint?.coordinates;
+
+                    if (!coordinates || coordinates.length !== 2) return null;
+
+                    // GeoJSON format is [longitude, latitude]
+                    const [longitude, latitude] = coordinates;
+
+                    return (
                         <Marker
                             key={offer.id}
-                            position={[parseFloat(offer.latitude), parseFloat(offer.longitude)]}
+                            position={[parseFloat(latitude), parseFloat(longitude)]}
                         >
                             <Popup>
                                 <strong>{offer.title}</strong><br />
-                                {offer.vendor?.businessName}
+                                {offer.vendor?.businessName}<br />
+                                {offer.type === 'discount' && `${offer.discountPercentage}% OFF`}
+                                {offer.type === 'voucher' && `${offer.voucherValue} BDT OFF`}
+                                {offer.type === 'coupon' && `Code: ${offer.couponCode}`}
                             </Popup>
                         </Marker>
-                    ) : null
-                ))}
+                    );
+                })}
             </MapContainer>
         </Box>
     );

@@ -6,8 +6,22 @@ import api from '../../src/lib/api';
 import FullScreenMap from '../../src/components/FullScreenMap';
 
 const fetchOffers = async () => {
-    const response = await api.get('/offers');
-    return response.data;
+    try {
+        const response = await api.get('/offers');
+        console.log('Offers API response:', response);
+        console.log('Offers data:', response.data);
+
+        // Handle both wrapped ({ data: { data: [...] } }) and unwrapped ({ data: [...] }) responses
+        const offers = Array.isArray(response.data)
+            ? response.data
+            : (response.data.data || []);
+
+        console.log('Extracted offers:', offers);
+        return offers;
+    } catch (error) {
+        console.error('Failed to fetch offers:', error);
+        return [];
+    }
 };
 
 export default function MapScreen() {
