@@ -1,9 +1,7 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import { StyleSheet, TouchableOpacity, View, Text as RNText } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
-import Box from './ui/Box';
-import Text from './ui/Text';
 
 interface FullScreenMapProps {
     offers: any[];
@@ -13,10 +11,17 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
     const router = useRouter();
 
     const initialRegion = {
-        latitude: 23.7925, // Default to Gulshan 1, Dhaka
+        latitude: 23.7925,
         longitude: 90.4078,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
+    };
+
+    const getOfferLabel = (offer: any) => {
+        if (offer.type === 'discount') return `${offer.discountPercentage}% OFF`;
+        if (offer.type === 'voucher') return `৳${offer.voucherValue} OFF`;
+        if (offer.type === 'coupon') return offer.couponCode;
+        return 'Offer';
     };
 
     return (
@@ -27,13 +32,11 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
             showsMyLocationButton
         >
             {offers?.map((offer: any) => {
-                // Extract coordinates from vendor location or city center (PostGIS Point format)
                 const coordinates = offer.vendor?.location?.coordinates ||
                     offer.city?.centerPoint?.coordinates;
 
                 if (!coordinates || coordinates.length !== 2) return null;
 
-                // GeoJSON format is [longitude, latitude]
                 const [longitude, latitude] = coordinates;
 
                 return (
@@ -43,26 +46,72 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
                             latitude: parseFloat(latitude),
                             longitude: parseFloat(longitude),
                         }}
-                        onCalloutPress={() => router.push(`/offer/${offer.id}`)}
+                        onPress={() => router.push(`/offer/${offer.id}`)}
                     >
-                        <Callout>
-                            <Box width={200} padding="s">
-                                <Text variant="body" fontWeight="bold" numberOfLines={1}>
+                        <TouchableOpacity
+                            style={styles.markerContainer}
+                            onPress={() => router.push(`/offer/${offer.id}`)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.markerContent}>
+                                <RNText style={styles.offerLabel} numberOfLines={1}>
+                                    {getOfferLabel(offer)}
+                                </RNText>
+                                <RNText style={styles.offerTitle} numberOfLines={1}>
                                     {offer.title}
-                                </Text>
-                                <Text variant="body" color="primary">
-                                    {offer.type === 'discount' && `${offer.discountPercentage}% OFF`}
-                                    {offer.type === 'voucher' && `${offer.voucherValue} BDT OFF`}
-                                    {offer.type === 'coupon' && `Code: ${offer.couponCode}`}
-                                </Text>
-                                <Text variant="body" fontSize={12} color="gray">
-                                    Tap to view details
-                                </Text>
-                            </Box>
-                        </Callout>
+                                </RNText>
+                            </View>
+                            <View style={styles.markerArrow} />
+                        </TouchableOpacity>
                     </Marker>
                 );
             })}
         </MapView>
     );
 }
+
+const styles = StyleSheet.create({
+    markerContainer: {
+        alignItems: 'center',
+    },
+    markerContent: {
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        minWidth: 100,
+        maxWidth: 150,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        borderWidth: 2,
+        borderColor: '#10b981',
+    },
+    offerLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#10b981',
+        textAlign: 'center',
+    },
+    offerTitle: {
+        fontSize: 9,
+        color: '#374151',
+        textAlign: 'center',
+        marginTop: 2,
+    },
+    markerArrow: {
+        width: 0,
+        height: 0,
+        backgroundColor: 'transparent',
+        borderStyle: 'solid',
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderTopWidth: 6,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: '#10b981',
+        marginTop: -1,
+    },
+});
