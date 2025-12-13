@@ -208,7 +208,7 @@ describe('OffersService', () => {
             const result = await service.findByVendor('vendor-id');
 
             expect(result).toEqual(mockOffers);
-            expect(mockQueryBuilder.where).toHaveBeenCalledWith('offer.vendorId = :vendorId', { vendorId: 'vendor-id' });
+            expect(mockQueryBuilder.where).toHaveBeenCalledWith('offer.vendor_id = :vendorId', { vendorId: 'vendor-id' });
         });
     });
 });

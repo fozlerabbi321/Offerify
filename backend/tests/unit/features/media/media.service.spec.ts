@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from '../../../../src/features/media/media.service';
+import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import { join } from 'path';
 
@@ -10,7 +11,20 @@ describe('MediaService', () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            providers: [MediaService],
+            providers: [
+                MediaService,
+                {
+                    provide: ConfigService,
+                    useValue: {
+                        get: jest.fn((key: string) => {
+                            const config = {
+                                'BACKEND_URL': 'http://localhost:3000',
+                            };
+                            return config[key];
+                        }),
+                    },
+                },
+            ],
         }).compile();
 
         service = module.get<MediaService>(MediaService);

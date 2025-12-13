@@ -232,6 +232,7 @@ describe('OffersService', () => {
 
     describe('update', () => {
         it('should update and return the offer', async () => {
+            const userId = 'user-uuid';
             const offerId = 'offer-uuid';
             const updateOfferDto = {
                 title: 'Updated Title',
@@ -246,6 +247,12 @@ describe('OffersService', () => {
                 vendorId: 'vendor-uuid',
                 cityId: 1,
                 discountPercentage: 50,
+                vendor: {
+                    id: 'vendor-uuid',
+                    user: {
+                        id: userId,
+                    },
+                },
             };
 
             const updatedOffer = {
@@ -263,10 +270,11 @@ describe('OffersService', () => {
                 .mockResolvedValueOnce(updatedOffer as any);
             jest.spyOn(offerRepository, 'save').mockResolvedValue(updatedOffer as any);
 
-            const result = await service.update(offerId, updateOfferDto);
+            const result = await service.update(offerId, userId, updateOfferDto);
 
             expect(offerRepository.findOne).toHaveBeenCalledWith({
                 where: { id: offerId },
+                relations: ['vendor', 'vendor.user'],
             });
             expect(offerRepository.save).toHaveBeenCalled();
             expect(result.title).toBe('Updated Title');
@@ -274,6 +282,7 @@ describe('OffersService', () => {
         });
 
         it('should throw NotFoundException if offer not found', async () => {
+            const userId = 'user-uuid';
             const offerId = 'non-existent-offer-id';
             const updateOfferDto = {
                 title: 'Updated Title',
@@ -281,10 +290,10 @@ describe('OffersService', () => {
 
             jest.spyOn(offerRepository, 'findOne').mockResolvedValue(null);
 
-            await expect(service.update(offerId, updateOfferDto)).rejects.toThrow(
+            await expect(service.update(offerId, userId, updateOfferDto)).rejects.toThrow(
                 NotFoundException,
             );
-            await expect(service.update(offerId, updateOfferDto)).rejects.toThrow(
+            await expect(service.update(offerId, userId, updateOfferDto)).rejects.toThrow(
                 `Offer with ID ${offerId} not found`,
             );
         });
@@ -292,30 +301,39 @@ describe('OffersService', () => {
 
     describe('remove', () => {
         it('should delete the offer successfully', async () => {
+            const userId = 'user-uuid';
             const offerId = 'offer-uuid';
             const mockOffer = {
                 id: offerId,
                 title: '50% Off Whopper',
+                vendor: {
+                    id: 'vendor-uuid',
+                    user: {
+                        id: userId,
+                    },
+                },
             };
 
             jest.spyOn(offerRepository, 'findOne').mockResolvedValue(mockOffer as any);
             jest.spyOn(offerRepository, 'remove').mockResolvedValue(mockOffer as any);
 
-            await service.remove(offerId);
+            await service.remove(offerId, userId);
 
             expect(offerRepository.findOne).toHaveBeenCalledWith({
                 where: { id: offerId },
+                relations: ['vendor', 'vendor.user'],
             });
             expect(offerRepository.remove).toHaveBeenCalledWith(mockOffer);
         });
 
         it('should throw NotFoundException if offer not found', async () => {
+            const userId = 'user-uuid';
             const offerId = 'non-existent-offer-id';
 
             jest.spyOn(offerRepository, 'findOne').mockResolvedValue(null);
 
-            await expect(service.remove(offerId)).rejects.toThrow(NotFoundException);
-            await expect(service.remove(offerId)).rejects.toThrow(
+            await expect(service.remove(offerId, userId)).rejects.toThrow(NotFoundException);
+            await expect(service.remove(offerId, userId)).rejects.toThrow(
                 `Offer with ID ${offerId} not found`,
             );
         });
