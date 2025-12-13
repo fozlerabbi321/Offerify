@@ -31,10 +31,14 @@ const theme = createTheme({
     colors: {
         mainBackground: palette.offWhite,
         cardPrimaryBackground: palette.purplePrimary,
+        cardBackground: palette.white,
         text: palette.black,
         textInverted: palette.white,
+        textMuted: palette.grayMedium,
         primary: palette.purplePrimary,
         secondary: palette.greenPrimary,
+        success: palette.greenPrimary,
+        neutral: palette.gray200,
         ...palette,
     },
     spacing: {

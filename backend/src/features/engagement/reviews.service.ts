@@ -53,4 +53,13 @@ export class ReviewsService {
             order: { createdAt: 'DESC' },
         });
     }
+
+    async getRecentReviewsForVendor(vendorId: string, limit: number = 5): Promise<Review[]> {
+        return this.reviewsRepository.find({
+            where: { vendorId },
+            relations: ['user'],
+            order: { createdAt: 'DESC' },
+            take: limit,
+        });
+    }
 }

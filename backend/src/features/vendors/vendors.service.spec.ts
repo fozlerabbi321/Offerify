@@ -130,4 +130,71 @@ describe('VendorsService', () => {
             await expect(service.findMyProfile('user-uuid')).rejects.toThrow(NotFoundException);
         });
     });
+
+    describe('updateProfile', () => {
+        it('should successfully update vendor profile basic info', async () => {
+            const userId = 'user-uuid';
+            const updateDto = { businessName: 'New Name', description: 'New Description', contactPhone: '+8801700000000' };
+            const existingVendor = { id: 'vendor-uuid', businessName: 'Old Name', user: { id: userId } };
+            const updatedVendor = { ...existingVendor, ...updateDto, slug: 'new-name' };
+
+            mockVendorRepo.findOne.mockResolvedValue(existingVendor);
+            mockVendorRepo.save.mockResolvedValue(updatedVendor);
+
+            const result = await service.updateProfile(userId, updateDto);
+
+            expect(result).toEqual(updatedVendor);
+            expect(mockVendorRepo.findOne).toHaveBeenCalledWith({ where: { user: { id: userId } } });
+            expect(mockVendorRepo.save).toHaveBeenCalled();
+        });
+
+        it('should update location if lat/long provided', async () => {
+            const userId = 'user-uuid';
+            const updateDto = { latitude: 23.8103, longitude: 90.4125 };
+            const existingVendor = { id: 'vendor-uuid', location: { type: 'Point', coordinates: [0, 0] }, user: { id: userId } };
+
+            mockVendorRepo.findOne.mockResolvedValue(existingVendor);
+            mockVendorRepo.save.mockImplementation((v: any) => v);
+
+            const result = await service.updateProfile(userId, updateDto);
+
+            expect(result.location).toEqual({
+                type: 'Point',
+                coordinates: [90.4125, 23.8103]
+            });
+        });
+
+        it('should throw NotFoundException if vendor profile not found', async () => {
+            mockVendorRepo.findOne.mockResolvedValue(null);
+
+            await expect(service.updateProfile('invalid-id', {}))
+                .rejects
+                .toThrow(NotFoundException);
+        });
+    });
+
+    describe('findById', () => {
+        it('should return vendor profile with city relation', async () => {
+            const vendorId = 'vendor-uuid';
+            const vendor = { id: vendorId, businessName: 'Store', city: { id: 1, name: 'Dhaka' } };
+
+            mockVendorRepo.findOne.mockResolvedValue(vendor);
+
+            const result = await service.findById(vendorId);
+
+            expect(result).toEqual(vendor);
+            expect(mockVendorRepo.findOne).toHaveBeenCalledWith({
+                where: { id: vendorId },
+                relations: ['city'],
+            });
+        });
+
+        it('should throw NotFoundException if vendor not found', async () => {
+            mockVendorRepo.findOne.mockResolvedValue(null);
+
+            await expect(service.findById('invalid-id'))
+                .rejects
+                .toThrow(NotFoundException);
+        });
+    });
 });

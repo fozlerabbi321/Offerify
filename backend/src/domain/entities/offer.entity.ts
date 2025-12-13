@@ -49,7 +49,9 @@ export class Offer {
     get image(): string | null {
         if (!this.imagePath) return null;
         if (this.imagePath.startsWith('http')) return this.imagePath; // External URL
-        return `${process.env.APP_URL || 'http://localhost:3000'}/${this.imagePath}`; // Local path
+        // Remove leading slash if present to avoid double slash
+        const path = this.imagePath.startsWith('/') ? this.imagePath.slice(1) : this.imagePath;
+        return `${process.env.APP_URL || 'http://localhost:3000'}/${path}`;
     }
 
     @ManyToOne(() => VendorProfile, (vendor) => vendor.offers)

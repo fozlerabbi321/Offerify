@@ -39,6 +39,9 @@ describe('AuthService', () => {
 
         service = module.get<AuthService>(AuthService);
         userRepository = module.get(getRepositoryToken(User));
+
+        // Clear all mocks before each test
+        jest.clearAllMocks();
     });
 
     it('should be defined', () => {
@@ -136,6 +139,91 @@ describe('AuthService', () => {
                 email: user.email,
                 role: user.role
             });
+        });
+    });
+
+    describe('updateProfile', () => {
+        it('should successfully update user profile', async () => {
+            const userId = 'user-uuid';
+            const updateDto = { name: 'John Doe', phone: '+8801712345678', avatarUrl: 'https://example.com/avatar.jpg' };
+            const existingUser = { id: userId, email: 'test@example.com', role: UserRole.CUSTOMER };
+            const updatedUser = { ...existingUser, ...updateDto };
+
+            mockUserRepository.findOne.mockResolvedValue(existingUser);
+            mockUserRepository.save.mockResolvedValue(updatedUser);
+
+            const result = await service.updateProfile(userId, updateDto);
+
+            expect(result).toEqual(updatedUser);
+            expect(mockUserRepository.findOne).toHaveBeenCalledWith({ where: { id: userId } });
+            expect(mockUserRepository.save).toHaveBeenCalledWith({ ...existingUser, ...updateDto });
+        });
+
+        it('should throw NotFoundException if user not found', async () => {
+            mockUserRepository.findOne.mockResolvedValue(null);
+
+            await expect(service.updateProfile('invalid-id', { name: 'John' }))
+                .rejects
+                .toThrow('User not found');
+        });
+
+        it('should throw ConflictException if phone already exists', async () => {
+            const userId = 'user-uuid';
+            const updateDto = { phone: '+8801712345678' };
+            const existingUser = { id: userId, email: 'test@example.com' };
+
+            mockUserRepository.findOne.mockResolvedValue(existingUser);
+            mockUserRepository.save.mockRejectedValue({ code: '23505' }); // Unique violation
+
+            await expect(service.updateProfile(userId, updateDto))
+                .rejects
+                .toThrow('Phone number already in use');
+        });
+    });
+
+    describe('changePassword', () => {
+        it('should successfully change password with correct current password', async () => {
+            const userId = 'user-uuid';
+            const changePasswordDto = { currentPassword: 'oldPassword', newPassword: 'newPassword123' };
+            const user = { id: userId, email: 'test@example.com', passwordHash: 'hashedOldPassword' };
+            const newHashedPassword = 'hashedNewPassword';
+
+            mockUserRepository.findOne.mockResolvedValue(user);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+            (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
+            (bcrypt.hash as jest.Mock).mockResolvedValue(newHashedPassword);
+            mockUserRepository.save.mockResolvedValue({ ...user, passwordHash: newHashedPassword });
+
+            const result = await service.changePassword(userId, changePasswordDto);
+
+            expect(result).toEqual({ message: 'Password changed successfully' });
+            expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+                where: { id: userId },
+                select: ['id', 'email', 'passwordHash', 'role', 'createdAt', 'updatedAt']
+            });
+            expect(bcrypt.hash).toHaveBeenCalledWith(changePasswordDto.newPassword, expect.any(String));
+            expect(mockUserRepository.save).toHaveBeenCalled();
+        });
+
+        it('should throw UnauthorizedException if current password is wrong', async () => {
+            const userId = 'user-uuid';
+            const changePasswordDto = { currentPassword: 'wrongPassword', newPassword: 'newPassword123' };
+            const user = { id: userId, email: 'test@example.com', passwordHash: 'hashedOldPassword' };
+
+            mockUserRepository.findOne.mockResolvedValue(user);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+            await expect(service.changePassword(userId, changePasswordDto))
+                .rejects
+                .toThrow('Current password is incorrect');
+        });
+
+        it('should throw NotFoundException if user not found', async () => {
+            mockUserRepository.findOne.mockResolvedValue(null);
+
+            await expect(service.changePassword('invalid-id', { currentPassword: 'old', newPassword: 'new' }))
+                .rejects
+                .toThrow('User not found');
         });
     });
 });

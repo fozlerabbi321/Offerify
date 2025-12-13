@@ -13,8 +13,13 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // Enable CORS
-  app.enableCors();
+  // Enable CORS with explicit methods
+  app.enableCors({
+    origin: ['http://localhost:8081', 'http://localhost:3000'], // Frontend origins
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   // Enable Multipart
   // Enable Multipart

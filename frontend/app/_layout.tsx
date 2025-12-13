@@ -51,6 +51,27 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" />
                     <Stack.Screen name="(auth)" />
                     <Stack.Screen name="(vendor)" />
+                    <Stack.Screen
+                        name="profile"
+                        options={{
+                            presentation: 'card',
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="vendor"
+                        options={{
+                            presentation: 'card',
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="offer"
+                        options={{
+                            presentation: 'card',
+                            headerShown: false,
+                        }}
+                    />
                 </Stack>
             </ThemeProvider>
         </QueryClientProvider>

@@ -6,9 +6,13 @@ import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { FavoritesService } from './favorites.service';
 import { ReviewsService } from './reviews.service';
 import { EngagementController } from './engagement.controller';
+import { VendorsModule } from '../vendors/vendors.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Favorite, Review, VendorProfile])],
+    imports: [
+        TypeOrmModule.forFeature([Favorite, Review, VendorProfile]),
+        VendorsModule,
+    ],
     providers: [FavoritesService, ReviewsService],
     controllers: [EngagementController],
     exports: [FavoritesService, ReviewsService],

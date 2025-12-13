@@ -26,6 +26,15 @@ export class User {
     @Column({ unique: true })
     email: string;
 
+    @Column({ nullable: true })
+    name: string;
+
+    @Column({ unique: true, nullable: true })
+    phone: string;
+
+    @Column({ nullable: true, name: 'avatar_url' })
+    avatarUrl: string;
+
     @Column({ select: false })
     @Exclude()
     passwordHash: string;

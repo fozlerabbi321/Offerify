@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { MultipartFile } from '@fastify/multipart';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -179,15 +179,9 @@ export class OffersService {
         return offer;
     }
 
-    async update(id: string, updateOfferDto: UpdateOfferDto): Promise<Offer> {
-        // Check if offer exists
-        const offer = await this.offerRepository.findOne({
-            where: { id },
-        });
-
-        if (!offer) {
-            throw new NotFoundException(`Offer with ID ${id} not found`);
-        }
+    async update(id: string, userId: string, updateOfferDto: UpdateOfferDto): Promise<Offer> {
+        // Verify ownership
+        const offer = await this.verifyOwnership(id, userId);
 
         // Update offer properties
         Object.assign(offer, updateOfferDto);
@@ -199,17 +193,52 @@ export class OffersService {
         return await this.findOne(id);
     }
 
-    async remove(id: string): Promise<void> {
-        // Check if offer exists
-        const offer = await this.offerRepository.findOne({
-            where: { id },
-        });
-
-        if (!offer) {
-            throw new NotFoundException(`Offer with ID ${id} not found`);
-        }
+    async remove(id: string, userId: string): Promise<void> {
+        // Verify ownership
+        const offer = await this.verifyOwnership(id, userId);
 
         // Delete the offer
         await this.offerRepository.remove(offer);
+    }
+
+    /**
+     * Verify that the user owns the offer
+     * @param offerId - Offer ID
+     * @param userId - User ID
+     * @returns Offer if user owns it
+     * @throws NotFoundException if offer doesn't exist
+     * @throws ForbiddenException if user doesn't own the offer
+     */
+    async verifyOwnership(offerId: string, userId: string): Promise<Offer> {
+        const offer = await this.offerRepository.findOne({
+            where: { id: offerId },
+            relations: ['vendor', 'vendor.user'],
+        });
+
+        if (!offer) {
+            throw new NotFoundException(`Offer with ID ${offerId} not found`);
+        }
+
+        if (offer.vendor.user.id !== userId) {
+            throw new ForbiddenException('You do not have permission to modify this offer');
+        }
+
+        return offer;
+    }
+
+    /**
+     * Get all offers for a specific vendor
+     * @param vendorId - Vendor ID
+     * @returns List of offers
+     */
+    async findByVendor(vendorId: string): Promise<Offer[]> {
+        return this.offerRepository
+            .createQueryBuilder('offer')
+            .where('offer.vendor_id = :vendorId', { vendorId })
+            .leftJoinAndSelect('offer.city', 'city')
+            .leftJoinAndSelect('offer.category', 'category')
+            .leftJoinAndSelect('offer.vendor', 'vendor')
+            .orderBy('offer.createdAt', 'DESC')
+            .getMany();
     }
 }

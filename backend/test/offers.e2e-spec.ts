@@ -209,4 +209,237 @@ describe('OffersController (e2e)', () => {
         expect(response.body.length).toBeGreaterThan(0);
         expect(response.body[0].title).toBe('Test Deal');
     });
+
+    it('PATCH /api/offers/:id (Update with ownership verification)', async () => {
+        // Setup data
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+        const vendorRepo = dataSource.getRepository(VendorProfile);
+        const categoryRepo = dataSource.getRepository(Category);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const user = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+
+        const otherUser = await userRepo.save({
+            email: 'other@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+
+        const vendor = await vendorRepo.save({
+            businessName: 'Burger King',
+            slug: 'burger-king',
+            user,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const otherVendor = await vendorRepo.save({
+            businessName: 'Pizza Hut',
+            slug: 'pizza-hut',
+            user: otherUser,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
+        const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
+        const otherToken = jwtService.sign({ email: otherUser.email, sub: otherUser.id, role: otherUser.role });
+
+        // Create offer
+        const createResponse = await request(app.getHttpServer())
+            .post('/api/offers')
+            .set('Authorization', `Bearer ${token}`)
+            .field('title', 'Original Title')
+            .field('description', 'Original description')
+            .field('type', OfferType.DISCOUNT)
+            .field('discountPercentage', 50)
+            .field('categoryId', category.id)
+            .expect(201);
+
+        const offerId = createResponse.body.id;
+
+        // Try to update with wrong user (should fail)
+        await request(app.getHttpServer())
+            .patch(`/api/offers/${offerId}`)
+            .set('Authorization', `Bearer ${otherToken}`)
+            .send({ title: 'Hacked Title' })
+            .expect(403);
+
+        // Update with correct user (should succeed)
+        const updateResponse = await request(app.getHttpServer())
+            .patch(`/api/offers/${offerId}`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ title: 'Updated Title' })
+            .expect(200);
+
+        expect(updateResponse.body.title).toBe('Updated Title');
+    });
+
+    it('DELETE /api/offers/:id (Delete with ownership verification)', async () => {
+        // Setup data
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+        const vendorRepo = dataSource.getRepository(VendorProfile);
+        const categoryRepo = dataSource.getRepository(Category);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const user = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+
+        const otherUser = await userRepo.save({
+            email: 'other@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+
+        const vendor = await vendorRepo.save({
+            businessName: 'Burger King',
+            slug: 'burger-king',
+            user,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
+        const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
+        const otherToken = jwtService.sign({ email: otherUser.email, sub: otherUser.id, role: otherUser.role });
+
+        // Create offer
+        const createResponse = await request(app.getHttpServer())
+            .post('/api/offers')
+            .set('Authorization', `Bearer ${token}`)
+            .field('title', 'To Delete')
+            .field('description', 'Will be deleted')
+            .field('type', OfferType.DISCOUNT)
+            .field('discountPercentage', 50)
+            .field('categoryId', category.id)
+            .expect(201);
+
+        const offerId = createResponse.body.id;
+
+        // Try to delete with wrong user (should fail)
+        await request(app.getHttpServer())
+            .delete(`/api/offers/${offerId}`)
+            .set('Authorization', `Bearer ${otherToken}`)
+            .expect(403);
+
+        // Delete with correct user (should succeed)
+        await request(app.getHttpServer())
+            .delete(`/api/offers/${offerId}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(204);
+
+        // Verify offer is deleted
+        await request(app.getHttpServer())
+            .get(`/api/offers/${offerId}`)
+            .expect(404);
+    });
+
+    it('GET /api/offers/my-offers (Get vendor\'s offers)', async () => {
+        // Setup data
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+        const vendorRepo = dataSource.getRepository(VendorProfile);
+        const categoryRepo = dataSource.getRepository(Category);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const user = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+
+        const vendor = await vendorRepo.save({
+            businessName: 'Burger King',
+            slug: 'burger-king',
+            user,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
+        const token = jwtService.sign({ email: user.email, sub: user.id, role: user.role });
+
+        // Create multiple offers
+        await request(app.getHttpServer())
+            .post('/api/offers')
+            .set('Authorization', `Bearer ${token}`)
+            .field('title', 'Offer 1')
+            .field('description', 'First offer')
+            .field('type', OfferType.DISCOUNT)
+            .field('discountPercentage', 30)
+            .field('categoryId', category.id)
+            .expect(201);
+
+        await request(app.getHttpServer())
+            .post('/api/offers')
+            .set('Authorization', `Bearer ${token}`)
+            .field('title', 'Offer 2')
+            .field('description', 'Second offer')
+            .field('type', OfferType.DISCOUNT)
+            .field('discountPercentage', 50)
+            .field('categoryId', category.id)
+            .expect(201);
+
+        // Get my offers
+        const response = await request(app.getHttpServer())
+            .get('/api/offers/my-offers')
+            .set('Authorization', `Bearer ${token}`)
+            .expect(200);
+
+        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.length).toBe(2);
+        expect(response.body[0].title).toBe('Offer 2'); // Most recent first
+        expect(response.body[1].title).toBe('Offer 1');
+    });
 });

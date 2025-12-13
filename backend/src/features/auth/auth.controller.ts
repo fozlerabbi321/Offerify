@@ -1,7 +1,9 @@
-import { Controller, Post, Body, UnauthorizedException, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, UseGuards, Get, Request, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -30,7 +32,27 @@ export class AuthController {
     @Get('profile')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    getProfile(@Request() req) {
-        return req.user;
+    async getProfile(@Request() req) {
+        // Fetch full user from database instead of relying on JWT payload
+        const user = await this.authService.findById(req.user.userId);
+        // Remove passwordHash from response
+        const { passwordHash, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+    }
+
+    @Patch('profile')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ description: 'Profile updated successfully' })
+    async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+        return this.authService.updateProfile(req.user.userId, updateProfileDto);
+    }
+
+    @Post('change-password')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ description: 'Password changed successfully' })
+    async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+        return this.authService.changePassword(req.user.userId, changePasswordDto);
     }
 }

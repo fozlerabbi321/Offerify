@@ -78,13 +78,19 @@ export class VendorsService {
         return profile;
     }
 
-    async getStats(userId: string): Promise<{ totalViews: number; totalSales: number; activeOffers: number }> {
+    async getStats(userId: string): Promise<{
+        totalViews: number;
+        totalRedemptions: number;
+        activeOffers: number;
+        ratingAvg: number;
+        reviewCount: number;
+    }> {
         const vendor = await this.findMyProfile(userId);
 
         const stats = await this.dataSource.getRepository(Offer)
             .createQueryBuilder('offer')
             .select('SUM(offer.views)', 'totalViews')
-            .addSelect('SUM(offer.voucherClaimedCount)', 'totalSales')
+            .addSelect('SUM(offer.voucherClaimedCount)', 'totalRedemptions')
             .addSelect('COUNT(offer.id)', 'activeOffers')
             .where('offer.vendorId = :vendorId', { vendorId: vendor.id })
             .andWhere('offer.isActive = :isActive', { isActive: true })
@@ -92,9 +98,55 @@ export class VendorsService {
 
         return {
             totalViews: parseInt(stats.totalViews) || 0,
-            totalSales: parseInt(stats.totalSales) || 0,
+            totalRedemptions: parseInt(stats.totalRedemptions) || 0,
             activeOffers: parseInt(stats.activeOffers) || 0,
+            ratingAvg: vendor.ratingAvg || 0,
+            reviewCount: vendor.reviewCount || 0,
         };
     }
-}
 
+    async updateProfile(userId: string, updateDto: any): Promise<VendorProfile> {
+        const vendor = await this.vendorRepo.findOne({
+            where: { user: { id: userId } },
+        });
+
+        if (!vendor) {
+            throw new NotFoundException('Vendor profile not found');
+        }
+
+        // Update basic fields
+        if (updateDto.businessName) vendor.businessName = updateDto.businessName;
+        if (updateDto.description) vendor.description = updateDto.description;
+        if (updateDto.contactPhone) vendor.contactPhone = updateDto.contactPhone;
+        if (updateDto.logoUrl) vendor.logoUrl = updateDto.logoUrl;
+        if (updateDto.coverImageUrl) vendor.coverImageUrl = updateDto.coverImageUrl;
+
+        // Update location if lat/long provided
+        if (updateDto.latitude !== undefined && updateDto.longitude !== undefined) {
+            vendor.location = {
+                type: 'Point',
+                coordinates: [updateDto.longitude, updateDto.latitude],
+            };
+        }
+
+        // Update slug if business name changed
+        if (updateDto.businessName) {
+            vendor.slug = updateDto.businessName.toLowerCase().replace(/ /g, '-');
+        }
+
+        return await this.vendorRepo.save(vendor);
+    }
+
+    async findById(vendorId: string): Promise<VendorProfile> {
+        const vendor = await this.vendorRepo.findOne({
+            where: { id: vendorId },
+            relations: ['city'],
+        });
+
+        if (!vendor) {
+            throw new NotFoundException('Vendor profile not found');
+        }
+
+        return vendor;
+    }
+}

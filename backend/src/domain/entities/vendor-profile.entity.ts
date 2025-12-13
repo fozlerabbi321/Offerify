@@ -29,6 +29,18 @@ export class VendorProfile {
     @Column({ unique: true })
     slug: string;
 
+    @Column({ type: 'text', nullable: true })
+    description: string;
+
+    @Column({ nullable: true, name: 'contact_phone' })
+    contactPhone: string;
+
+    @Column({ nullable: true, name: 'logo_url' })
+    logoUrl: string;
+
+    @Column({ nullable: true, name: 'cover_image_url' })
+    coverImageUrl: string;
+
     @Column({
         type: 'geography',
         spatialFeatureType: 'Point',

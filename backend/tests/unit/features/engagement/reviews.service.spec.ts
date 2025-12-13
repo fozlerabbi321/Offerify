@@ -8,6 +8,7 @@ import { ConflictException } from '@nestjs/common';
 
 const mockReviewRepository = {
     findOne: jest.fn(),
+    find: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     average: jest.fn(),
@@ -86,6 +87,28 @@ describe('ReviewsService', () => {
             mockReviewRepository.findOne.mockResolvedValue({ id: 'r1' });
 
             await expect(service.create(userId, dto)).rejects.toThrow(ConflictException);
+        });
+    });
+
+    describe('getRecentReviewsForVendor', () => {
+        it('should return recent reviews for a vendor with limit', async () => {
+            const vendorId = 'v1';
+            const mockReviews = [
+                { id: 'r1', rating: 5, comment: 'Great!', createdAt: new Date() },
+                { id: 'r2', rating: 4, comment: 'Good', createdAt: new Date() },
+            ];
+
+            mockReviewRepository.find.mockResolvedValue(mockReviews);
+
+            const result = await service.getRecentReviewsForVendor(vendorId, 5);
+
+            expect(result).toEqual(mockReviews);
+            expect(mockReviewRepository.find).toHaveBeenCalledWith({
+                where: { vendorId },
+                relations: ['user'],
+                order: { createdAt: 'DESC' },
+                take: 5,
+            });
         });
     });
 });

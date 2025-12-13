@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, TextInput, TouchableOpacity, Alert, Image as RNImage, Modal, FlatList, Platform } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -34,12 +34,22 @@ const fetchCities = async (): Promise<City[]> => {
     return response.data || [];
 };
 
+const fetchOffer = async (offerId: string) => {
+    const response = await api.get(`/offers/${offerId}`);
+    return response.data;
+};
+
 const createOffer = async (formData: FormData) => {
     const response = await api.post('/offers', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
     });
+    return response.data;
+};
+
+const updateOffer = async ({ offerId, data }: { offerId: string; data: any }) => {
+    const response = await api.patch(`/offers/${offerId}`, data);
     return response.data;
 };
 
@@ -65,6 +75,8 @@ export default function PostOfferScreen() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const isWeb = Platform.OS === 'web';
+    const { editId } = useLocalSearchParams<{ editId?: string }>();
+    const isEditMode = !!editId;
 
     // Form state
     const [title, setTitle] = useState('');
@@ -76,11 +88,36 @@ export default function PostOfferScreen() {
     const [couponCode, setCouponCode] = useState('');
     const [voucherValue, setVoucherValue] = useState('');
     const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+    const [existingImage, setExistingImage] = useState<string | null>(null);
+    const [isActive, setIsActive] = useState(true);
 
     // Modal state
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [showCityModal, setShowCityModal] = useState(false);
     const [showTypeModal, setShowTypeModal] = useState(false);
+
+    // Fetch offer data for edit mode
+    const { data: offerData, isLoading: isLoadingOffer } = useQuery({
+        queryKey: ['offer', editId],
+        queryFn: () => fetchOffer(editId!),
+        enabled: isEditMode,
+    });
+
+    // Populate form when offer data is loaded
+    useEffect(() => {
+        if (offerData) {
+            setTitle(offerData.title || '');
+            setDescription(offerData.description || '');
+            setOfferType(offerData.type || 'discount');
+            setCategoryId(offerData.category?.id || offerData.categoryId || '');
+            setCityId(offerData.city?.id || offerData.cityId || null);
+            setDiscountPercentage(offerData.discountPercentage?.toString() || '');
+            setCouponCode(offerData.couponCode || '');
+            setVoucherValue(offerData.voucherValue?.toString() || '');
+            setExistingImage(offerData.image || null);
+            setIsActive(offerData.isActive ?? true);
+        }
+    }, [offerData]);
 
     // Queries
     const { data: categories = [] } = useQuery({
@@ -93,27 +130,56 @@ export default function PostOfferScreen() {
         queryFn: fetchCities,
     });
 
-    // Mutation
-    const mutation = useMutation({
+    // Create Mutation
+    const createMutation = useMutation({
         mutationFn: createOffer,
         onSuccess: (data) => {
             console.log('Offer created successfully:', data);
             queryClient.invalidateQueries({ queryKey: ['offers'] });
+            queryClient.invalidateQueries({ queryKey: ['vendorOffers'] });
             queryClient.invalidateQueries({ queryKey: ['vendorStats'] });
 
             if (isWeb) {
-                // For web, use window.alert and then navigate
                 window.alert('Offer created successfully!');
-                router.replace('/vendor');
+                router.replace('/vendor/offers');
             } else {
                 Alert.alert('Success', 'Offer created successfully!', [
-                    { text: 'OK', onPress: () => router.replace('/vendor') }
+                    { text: 'OK', onPress: () => router.replace('/vendor/offers') }
                 ]);
             }
         },
         onError: (err: any) => {
             console.error('Create offer error:', err);
             const errorMessage = err.response?.data?.message || 'Failed to create offer';
+            if (isWeb) {
+                window.alert(`Error: ${errorMessage}`);
+            } else {
+                Alert.alert('Error', errorMessage);
+            }
+        },
+    });
+
+    // Update Mutation
+    const updateMutation = useMutation({
+        mutationFn: updateOffer,
+        onSuccess: (data) => {
+            console.log('Offer updated successfully:', data);
+            queryClient.invalidateQueries({ queryKey: ['offers'] });
+            queryClient.invalidateQueries({ queryKey: ['vendorOffers'] });
+            queryClient.invalidateQueries({ queryKey: ['offer', editId] });
+
+            if (isWeb) {
+                window.alert('Offer updated successfully!');
+                router.replace('/vendor/offers');
+            } else {
+                Alert.alert('Success', 'Offer updated successfully!', [
+                    { text: 'OK', onPress: () => router.replace('/vendor/offers') }
+                ]);
+            }
+        },
+        onError: (err: any) => {
+            console.error('Update offer error:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to update offer';
             if (isWeb) {
                 window.alert(`Error: ${errorMessage}`);
             } else {
@@ -138,6 +204,7 @@ export default function PostOfferScreen() {
 
         if (!result.canceled) {
             setImage(result.assets[0]);
+            setExistingImage(null); // Clear existing image when new one selected
         }
     };
 
@@ -181,57 +248,137 @@ export default function PostOfferScreen() {
     const handleSubmit = () => {
         if (!validateForm()) return;
 
-        const formData = new FormData();
-
-        // Required fields
-        formData.append('title', title.trim());
-        formData.append('description', description.trim());
-        formData.append('type', offerType);
-        formData.append('categoryId', categoryId);
-
-        // Optional city
-        if (cityId) {
-            formData.append('cityId', cityId.toString());
-        }
-
-        // Type-specific fields
-        if (offerType === 'discount' && discountPercentage) {
-            formData.append('discountPercentage', discountPercentage);
-        }
-        if (offerType === 'coupon' && couponCode) {
-            formData.append('couponCode', couponCode.trim());
-        }
-        if (offerType === 'voucher' && voucherValue) {
-            formData.append('voucherValue', voucherValue);
-        }
-
-        // Image file
-        if (image) {
-            const file: any = {
-                uri: image.uri,
-                name: image.fileName || 'offer.jpg',
-                type: image.mimeType || 'image/jpeg',
+        if (isEditMode) {
+            // Update existing offer
+            const updateData: any = {
+                title: title.trim(),
+                description: description.trim(),
+                isActive,
             };
-            formData.append('file', file);
-        }
 
-        console.log('Submitting offer:', { title, description, offerType, categoryId, cityId });
-        mutation.mutate(formData);
+            if (offerType === 'discount' && discountPercentage) {
+                updateData.discountPercentage = parseFloat(discountPercentage);
+            }
+            if (offerType === 'coupon' && couponCode) {
+                updateData.couponCode = couponCode.trim();
+            }
+            if (offerType === 'voucher' && voucherValue) {
+                updateData.voucherValue = parseInt(voucherValue);
+            }
+
+            updateMutation.mutate({ offerId: editId!, data: updateData });
+        } else {
+            // Create new offer
+            const formData = new FormData();
+
+            formData.append('title', title.trim());
+            formData.append('description', description.trim());
+            formData.append('type', offerType);
+            formData.append('categoryId', categoryId);
+
+            if (cityId) {
+                formData.append('cityId', cityId.toString());
+            }
+
+            if (offerType === 'discount' && discountPercentage) {
+                formData.append('discountPercentage', discountPercentage);
+            }
+            if (offerType === 'coupon' && couponCode) {
+                formData.append('couponCode', couponCode.trim());
+            }
+            if (offerType === 'voucher' && voucherValue) {
+                formData.append('voucherValue', voucherValue);
+            }
+
+            // Image file - handle web vs native
+            if (image) {
+                if (isWeb) {
+                    // For web, we need to fetch the blob
+                    fetch(image.uri)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const file = new File([blob], image.fileName || 'offer.jpg', { type: image.mimeType || 'image/jpeg' });
+                            formData.append('file', file);
+                            createMutation.mutate(formData);
+                        })
+                        .catch(() => {
+                            createMutation.mutate(formData);
+                        });
+                    return;
+                } else {
+                    const file: any = {
+                        uri: image.uri,
+                        name: image.fileName || 'offer.jpg',
+                        type: image.mimeType || 'image/jpeg',
+                    };
+                    formData.append('file', file);
+                }
+            }
+
+            createMutation.mutate(formData);
+        }
     };
 
     const selectedCategory = categories.find(c => c.id === categoryId);
     const selectedCity = cities.find(c => c.id === cityId);
     const selectedType = OFFER_TYPES.find(t => t.value === offerType);
+    const isPending = createMutation.isPending || updateMutation.isPending;
+
+    if (isEditMode && isLoadingOffer) {
+        return (
+            <Box flex={1} backgroundColor="mainBackground" justifyContent="center" alignItems="center">
+                <Text>Loading offer...</Text>
+            </Box>
+        );
+    }
 
     return (
         <ScrollView
             contentContainerStyle={{ padding: 16, paddingBottom: 100, maxWidth: 600, alignSelf: 'center', width: '100%' }}
             style={{ backgroundColor: theme.colors.mainBackground }}
         >
-            <Text variant="header" marginBottom="l">Create Offer</Text>
+            <Text variant="header" marginBottom="l">
+                {isEditMode ? 'Edit Offer' : 'Create Offer'}
+            </Text>
+
+            {/* Active/Inactive Toggle (Edit mode only) */}
+            {isEditMode && (
+                <Box
+                    flexDirection="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    backgroundColor="white"
+                    padding="m"
+                    borderRadius={12}
+                    marginBottom="l"
+                >
+                    <Text fontWeight="600">Offer Status</Text>
+                    <TouchableOpacity onPress={() => setIsActive(!isActive)} activeOpacity={0.7}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            backgroundColor={isActive ? 'cardPrimaryBackground' : 'gray'}
+                            paddingHorizontal="m"
+                            paddingVertical="s"
+                            borderRadius={20}
+                        >
+                            <Box
+                                width={8}
+                                height={8}
+                                borderRadius={4}
+                                backgroundColor="white"
+                                marginRight="xs"
+                            />
+                            <Text fontSize={14} fontWeight="600" color="textInverted">
+                                {isActive ? 'Active' : 'Inactive'}
+                            </Text>
+                        </Box>
+                    </TouchableOpacity>
+                </Box>
+            )}
 
             {/* Image Picker */}
-            <Text marginBottom="s" fontWeight="600">Offer Image (Optional)</Text>
+            <Text marginBottom="s" fontWeight="600">Offer Image {!isEditMode && '(Optional)'}</Text>
             <TouchableOpacity onPress={pickImage}>
                 <Box
                     height={200}
@@ -244,6 +391,8 @@ export default function PostOfferScreen() {
                 >
                     {image ? (
                         <RNImage source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} />
+                    ) : existingImage ? (
+                        <RNImage source={{ uri: existingImage }} style={{ width: '100%', height: '100%' }} />
                     ) : (
                         <Box alignItems="center">
                             <Ionicons name="image-outline" size={48} color="white" />
@@ -275,29 +424,33 @@ export default function PostOfferScreen() {
                 placeholderTextColor="#999"
             />
 
-            {/* Offer Type Selector */}
-            <Text marginBottom="s" fontWeight="600">Offer Type <Text color="error">*</Text></Text>
-            <TouchableOpacity onPress={() => setShowTypeModal(true)}>
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    padding="m"
-                    backgroundColor="white"
-                    borderRadius={8}
-                    borderWidth={1}
-                    borderColor="gray"
-                    marginBottom="m"
-                >
-                    <Box>
-                        <Text fontWeight="600">{selectedType?.label || 'Select Type'}</Text>
-                        {selectedType && (
-                            <Text fontSize={12} color="darkGray">{selectedType.description}</Text>
-                        )}
-                    </Box>
-                    <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
-                </Box>
-            </TouchableOpacity>
+            {/* Offer Type Selector (Create mode only) */}
+            {!isEditMode && (
+                <>
+                    <Text marginBottom="s" fontWeight="600">Offer Type <Text color="error">*</Text></Text>
+                    <TouchableOpacity onPress={() => setShowTypeModal(true)}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            padding="m"
+                            backgroundColor="white"
+                            borderRadius={8}
+                            borderWidth={1}
+                            borderColor="gray"
+                            marginBottom="m"
+                        >
+                            <Box>
+                                <Text fontWeight="600">{selectedType?.label || 'Select Type'}</Text>
+                                {selectedType && (
+                                    <Text fontSize={12} color="darkGray">{selectedType.description}</Text>
+                                )}
+                            </Box>
+                            <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
+                        </Box>
+                    </TouchableOpacity>
+                </>
+            )}
 
             {/* Conditional Fields based on Offer Type */}
             {offerType === 'discount' && (
@@ -360,67 +513,75 @@ export default function PostOfferScreen() {
                 </>
             )}
 
-            {/* Category Selector */}
-            <Text marginBottom="s" fontWeight="600">Category <Text color="error">*</Text></Text>
-            <TouchableOpacity onPress={() => setShowCategoryModal(true)}>
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    padding="m"
-                    backgroundColor="white"
-                    borderRadius={8}
-                    borderWidth={1}
-                    borderColor={categoryId ? 'primary' : 'gray'}
-                    marginBottom="m"
-                >
-                    <Text color={categoryId ? 'text' : 'darkGray'}>
-                        {selectedCategory?.name || 'Select Category'}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
-                </Box>
-            </TouchableOpacity>
+            {/* Category Selector (Create mode only) */}
+            {!isEditMode && (
+                <>
+                    <Text marginBottom="s" fontWeight="600">Category <Text color="error">*</Text></Text>
+                    <TouchableOpacity onPress={() => setShowCategoryModal(true)}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            padding="m"
+                            backgroundColor="white"
+                            borderRadius={8}
+                            borderWidth={1}
+                            borderColor={categoryId ? 'primary' : 'gray'}
+                            marginBottom="m"
+                        >
+                            <Text color={categoryId ? 'text' : 'darkGray'}>
+                                {selectedCategory?.name || 'Select Category'}
+                            </Text>
+                            <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
+                        </Box>
+                    </TouchableOpacity>
+                </>
+            )}
 
-            {/* City Selector (Optional) */}
-            <Text marginBottom="s" fontWeight="600">Target City (Optional)</Text>
-            <TouchableOpacity onPress={() => setShowCityModal(true)}>
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    padding="m"
-                    backgroundColor="white"
-                    borderRadius={8}
-                    borderWidth={1}
-                    borderColor={cityId ? 'primary' : 'gray'}
-                    marginBottom="m"
-                >
-                    <Text color={cityId ? 'text' : 'darkGray'}>
-                        {selectedCity?.name || 'Use vendor location (default)'}
-                    </Text>
-                    <Box flexDirection="row" alignItems="center">
-                        {cityId && (
-                            <TouchableOpacity onPress={() => setCityId(null)} style={{ marginRight: 8 }}>
-                                <Ionicons name="close-circle" size={20} color={theme.colors.darkGray} />
-                            </TouchableOpacity>
-                        )}
-                        <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
-                    </Box>
-                </Box>
-            </TouchableOpacity>
+            {/* City Selector (Create mode only) */}
+            {!isEditMode && (
+                <>
+                    <Text marginBottom="s" fontWeight="600">Target City (Optional)</Text>
+                    <TouchableOpacity onPress={() => setShowCityModal(true)}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            padding="m"
+                            backgroundColor="white"
+                            borderRadius={8}
+                            borderWidth={1}
+                            borderColor={cityId ? 'primary' : 'gray'}
+                            marginBottom="m"
+                        >
+                            <Text color={cityId ? 'text' : 'darkGray'}>
+                                {selectedCity?.name || 'Use vendor location (default)'}
+                            </Text>
+                            <Box flexDirection="row" alignItems="center">
+                                {cityId && (
+                                    <TouchableOpacity onPress={() => setCityId(null)} style={{ marginRight: 8 }}>
+                                        <Ionicons name="close-circle" size={20} color={theme.colors.darkGray} />
+                                    </TouchableOpacity>
+                                )}
+                                <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
+                            </Box>
+                        </Box>
+                    </TouchableOpacity>
+                </>
+            )}
 
             {/* Submit Button */}
-            <TouchableOpacity onPress={handleSubmit} disabled={mutation.isPending}>
+            <TouchableOpacity onPress={handleSubmit} disabled={isPending}>
                 <Box
                     backgroundColor="primary"
                     padding="m"
                     borderRadius={8}
                     alignItems="center"
-                    opacity={mutation.isPending ? 0.7 : 1}
+                    opacity={isPending ? 0.7 : 1}
                     marginTop="m"
                 >
                     <Text color="textInverted" fontWeight="bold" fontSize={18}>
-                        {mutation.isPending ? 'Creating...' : 'Create Offer'}
+                        {isPending ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Offer' : 'Create Offer')}
                     </Text>
                 </Box>
             </TouchableOpacity>

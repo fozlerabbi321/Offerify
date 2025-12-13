@@ -73,8 +73,10 @@ export default function AccountScreen() {
         );
     }
 
-    const getInitials = (email: string) => {
-        return email.substring(0, 2).toUpperCase();
+    const getInitials = (nameOrEmail: string) => {
+        return nameOrEmail
+            ? nameOrEmail.substring(0, 2).toUpperCase()
+            : 'U';
     };
 
     return (
@@ -90,12 +92,21 @@ export default function AccountScreen() {
                         alignItems="center"
                         justifyContent="center"
                         marginBottom="m"
+                        overflow="hidden"
                     >
-                        <Text variant="header" color="textInverted" fontSize={32}>
-                            {getInitials(user.email)}
-                        </Text>
+                        {user.avatarUrl ? (
+                            <Image
+                                source={{ uri: user.avatarUrl }}
+                                style={{ width: 80, height: 80 }}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <Text variant="header" color="textInverted" fontSize={32}>
+                                {getInitials(user.name || user.email)}
+                            </Text>
+                        )}
                     </Box>
-                    <Text variant="header">{user.email.split('@')[0]}</Text>
+                    <Text variant="header">{user.name || user.email.split('@')[0]}</Text>
                     <Text variant="body" color="gray500">{user.email}</Text>
                     <Box
                         backgroundColor={user.role === 'VENDOR' ? 'purpleLight' : 'secondaryLight'}
@@ -136,7 +147,7 @@ export default function AccountScreen() {
                                 </Box>
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity onPress={() => router.push('/(vendor)')}>
+                            <TouchableOpacity onPress={() => router.push('/vendor')}>
                                 <Box
                                     padding="m"
                                     backgroundColor="primary"
@@ -158,8 +169,8 @@ export default function AccountScreen() {
                     <Text variant="subheader" marginBottom="s">General</Text>
                     <MenuItem
                         icon="person-outline"
-                        label="Edit Profile"
-                        onPress={() => console.log('Edit Profile')}
+                        label="My Profile"
+                        onPress={() => router.push('/profile')}
                     />
                     <MenuItem
                         icon="heart-outline"

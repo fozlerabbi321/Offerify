@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query, UseGuards, Request, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, HttpCode, HttpStatus, Query, UseGuards, Request, Req, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { OffersService } from './offers.service';
@@ -100,21 +100,43 @@ export class OffersController {
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Update an offer' })
     @ApiParam({ name: 'id', description: 'Offer UUID' })
     @ApiResponse({ status: 200, description: 'Offer updated successfully' })
     @ApiResponse({ status: 404, description: 'Offer not found' })
-    async update(@Param('id') id: string, @Body() updateOfferDto: UpdateOfferDto) {
-        return this.offersService.update(id, updateOfferDto);
+    @ApiResponse({ status: 403, description: 'Forbidden - You do not own this offer' })
+    async update(@Param('id') id: string, @Req() req, @Body() updateOfferDto: UpdateOfferDto) {
+        return this.offersService.update(id, (req as any).user.id, updateOfferDto);
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Delete an offer' })
     @ApiParam({ name: 'id', description: 'Offer UUID' })
     @ApiResponse({ status: 204, description: 'Offer deleted successfully' })
     @ApiResponse({ status: 404, description: 'Offer not found' })
-    async remove(@Param('id') id: string) {
-        return this.offersService.remove(id);
+    @ApiResponse({ status: 403, description: 'Forbidden - You do not own this offer' })
+    async remove(@Param('id') id: string, @Req() req) {
+        return this.offersService.remove(id, (req as any).user.id);
+    }
+
+    @Get('my-offers')
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Get current vendor\'s offers' })
+    @ApiResponse({ status: 200, description: 'List of vendor offers' })
+    async getMyOffers(@Req() req) {
+        // First, get vendor profile from user ID
+        const vendorRepo = this.offersService['vendorRepository'];
+        const vendor = await vendorRepo.findOne({
+            where: { user: { id: (req as any).user.userId } },
+        });
+
+        if (!vendor) {
+            throw new NotFoundException('Vendor profile not found');
+        }
+
+        return this.offersService.findByVendor(vendor.id);
     }
 }
