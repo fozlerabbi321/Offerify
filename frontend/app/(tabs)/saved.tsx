@@ -8,13 +8,14 @@ import Box from '../../src/components/ui/Box';
 import Text from '../../src/components/ui/Text';
 import api from '../../src/lib/api';
 import theme from '../../src/theme/theme';
+import AuthWrapper from '../../src/components/auth/AuthWrapper';
 
 const fetchFavorites = async () => {
     const response = await api.get('/account/favorites');
     return response.data.data;
 };
 
-export default function SavedScreen() {
+function SavedScreenContent() {
     const router = useRouter();
     const { data: favorites, isLoading } = useQuery({
         queryKey: ['favorites'],
@@ -70,3 +71,12 @@ export default function SavedScreen() {
         </Box>
     );
 }
+
+export default function SavedScreen() {
+    return (
+        <AuthWrapper>
+            <SavedScreenContent />
+        </AuthWrapper>
+    );
+}
+

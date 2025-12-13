@@ -46,6 +46,9 @@ export class User {
     })
     role: UserRole;
 
+    @Column({ default: false, name: 'is_banned' })
+    isBanned: boolean;
+
     @OneToOne(() => VendorProfile, (vendor) => vendor.user, { nullable: true })
     vendorProfile: VendorProfile;
 

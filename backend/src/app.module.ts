@@ -14,6 +14,7 @@ import { RedemptionsModule } from './features/redemptions/redemptions.module';
 import { EngagementModule } from './features/engagement/engagement.module';
 import { MediaModule } from './features/media/media.module';
 import { CategoriesModule } from './features/categories/categories.module';
+import { AdminModule } from './features/admin/admin.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -33,6 +34,7 @@ import { ConfigService } from '@nestjs/config';
     EngagementModule,
     MediaModule,
     CategoriesModule,
+    AdminModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
