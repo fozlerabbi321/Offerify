@@ -23,7 +23,9 @@ export default function VendorsScreen() {
     const deleteVendor = useDeleteVendor();
 
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+    const [deletingVendorId, setDeletingVendorId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ businessName: '', contactPhone: '' });
 
     const formatDate = (dateString: string) => {
@@ -85,25 +87,20 @@ export default function VendorsScreen() {
         }
     };
 
-    const handleDelete = (vendorId: string) => {
-        Alert.alert(
-            'Delete Vendor',
-            'Are you sure you want to delete this vendor? This will remove all their offers and data.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteVendor.mutateAsync(vendorId);
-                        } catch (error) {
-                            Alert.alert('Error', 'Failed to delete vendor');
-                        }
-                    }
-                }
-            ]
-        );
+    const confirmDelete = (vendorId: string) => {
+        setDeletingVendorId(vendorId);
+        setDeleteModalVisible(true);
+    };
+
+    const handleDelete = async () => {
+        if (!deletingVendorId) return;
+        try {
+            await deleteVendor.mutateAsync(deletingVendorId);
+            setDeleteModalVisible(false);
+            setDeletingVendorId(null);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to delete vendor');
+        }
     };
 
     const getStatusColor = (status: string) => {
@@ -214,7 +211,7 @@ export default function VendorsScreen() {
                                             <Pressable onPress={() => handleEdit(vendor)} style={styles.iconButton}>
                                                 <Ionicons name="pencil" size={20} color="#5A31F4" />
                                             </Pressable>
-                                            <Pressable onPress={() => handleDelete(vendor.id)} style={styles.iconButton}>
+                                            <Pressable onPress={() => confirmDelete(vendor.id)} style={styles.iconButton}>
                                                 <Ionicons name="trash-outline" size={20} color="#E53935" />
                                             </Pressable>
                                         </View>
@@ -440,6 +437,43 @@ export default function VendorsScreen() {
                                     </View>
                                 )}
                             </ScrollView>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* Delete Confirmation Modal */}
+                <Modal
+                    visible={deleteModalVisible}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setDeleteModalVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { maxWidth: 320 }]}>
+                            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                                    <Ionicons name="alert-circle" size={28} color="#E53935" />
+                                </View>
+                                <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Delete Vendor?</Text>
+                                <Text style={{ textAlign: 'center', color: '#666', marginTop: 8 }}>
+                                    Are you sure you want to delete this vendor? This action will remove all their offers and data.
+                                </Text>
+                            </View>
+
+                            <View style={styles.modalActions}>
+                                <Pressable
+                                    style={[styles.modalButton, styles.cancelButton]}
+                                    onPress={() => setDeleteModalVisible(false)}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </Pressable>
+                                <Pressable
+                                    style={[styles.modalButton, styles.deleteButton]}
+                                    onPress={handleDelete}
+                                >
+                                    <Text style={styles.saveButtonText}>Delete</Text>
+                                </Pressable>
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -846,6 +880,9 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         backgroundColor: '#5A31F4',
+    },
+    deleteButton: {
+        backgroundColor: '#E53935',
     },
     cancelButtonText: {
         color: '#666',

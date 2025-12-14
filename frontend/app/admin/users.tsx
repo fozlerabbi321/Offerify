@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, ActivityIndicator, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, TextInput, Pressable, ActivityIndicator, Image, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAdminUsers, useToggleBan, useUpdateUser, useDeleteUser, User } from '../../src/api/admin';
 import { Alert, Modal } from 'react-native';
 
 export default function UsersScreen() {
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 768;
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const { data, isLoading, refetch } = useAdminUsers({ page, limit: 10, search: search || undefined });
@@ -12,8 +14,11 @@ export default function UsersScreen() {
     const updateUser = useUpdateUser();
     const deleteUser = useDeleteUser();
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ name: '', role: '' });
+
 
     const handleToggleBan = async (userId: string) => {
         await toggleBan.mutateAsync(userId);
@@ -39,25 +44,20 @@ export default function UsersScreen() {
         }
     };
 
-    const handleDelete = (userId: string) => {
-        Alert.alert(
-            'Delete User',
-            'Are you sure you want to delete this user? This action cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteUser.mutateAsync(userId);
-                        } catch (error) {
-                            Alert.alert('Error', 'Failed to delete user');
-                        }
-                    }
-                }
-            ]
-        );
+    const confirmDelete = (userId: string) => {
+        setDeletingUserId(userId);
+        setDeleteModalVisible(true);
+    };
+
+    const handleDelete = async () => {
+        if (!deletingUserId) return;
+        try {
+            await deleteUser.mutateAsync(deletingUserId);
+            setDeleteModalVisible(false);
+            setDeletingUserId(null);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to delete user');
+        }
     };
 
     const handleSearch = () => {
@@ -116,7 +116,7 @@ export default function UsersScreen() {
 
                         {/* User List */}
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={[styles.tableContainer, { minWidth: 600 }]}>
+                            <View style={[styles.tableContainer, { minWidth: isDesktop ? 1200 : 600 }]}>
                                 {/* Table Header */}
                                 <View style={styles.tableHeader}>
                                     <Text style={[styles.tableHeaderText, { flex: 2 }]}>User</Text>
@@ -165,7 +165,7 @@ export default function UsersScreen() {
                                             <Pressable onPress={() => handleEdit(user)} style={styles.actionButton}>
                                                 <Ionicons name="pencil" size={18} color="#5A31F4" />
                                             </Pressable>
-                                            <Pressable onPress={() => handleDelete(user.id)} style={styles.actionButton}>
+                                            <Pressable onPress={() => confirmDelete(user.id)} style={styles.actionButton}>
                                                 <Ionicons name="trash-outline" size={18} color="#E53935" />
                                             </Pressable>
                                             <Switch
@@ -237,32 +237,72 @@ export default function UsersScreen() {
                             </View>
                         </Modal>
 
-                        {/* Pagination */}
-                        {data?.meta && data.meta.totalPages > 1 && (
-                            <View style={styles.pagination}>
-                                <Pressable
-                                    style={[styles.pageButton, page === 1 && styles.pageButtonDisabled]}
-                                    onPress={() => setPage(Math.max(1, page - 1))}
-                                    disabled={page === 1}
-                                >
-                                    <Ionicons name="chevron-back" size={20} color={page === 1 ? '#CCC' : '#5A31F4'} />
-                                </Pressable>
-                                <Text style={styles.pageInfo}>
-                                    Page {page} of {data.meta.totalPages}
-                                </Text>
-                                <Pressable
-                                    style={[styles.pageButton, page === data.meta.totalPages && styles.pageButtonDisabled]}
-                                    onPress={() => setPage(Math.min(data.meta.totalPages, page + 1))}
-                                    disabled={page === data.meta.totalPages}
-                                >
-                                    <Ionicons name="chevron-forward" size={20} color={page === data.meta.totalPages ? '#CCC' : '#5A31F4'} />
-                                </Pressable>
+                        {/* Delete Confirmation Modal */}
+                        <Modal
+                            visible={deleteModalVisible}
+                            transparent={true}
+                            animationType="fade"
+                            onRequestClose={() => setDeleteModalVisible(false)}
+                        >
+                            <View style={styles.modalOverlay}>
+                                <View style={[styles.modalContent, { maxWidth: 320 }]}>
+                                    <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                                        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                                            <Ionicons name="alert-circle" size={28} color="#E53935" />
+                                        </View>
+                                        <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Delete User?</Text>
+                                        <Text style={{ textAlign: 'center', color: '#666', marginTop: 8 }}>
+                                            Are you sure you want to delete this user? This action cannot be undone.
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.modalActions}>
+                                        <Pressable
+                                            style={[styles.modalButton, styles.cancelButton]}
+                                            onPress={() => setDeleteModalVisible(false)}
+                                        >
+                                            <Text style={styles.cancelButtonText}>Cancel</Text>
+                                        </Pressable>
+                                        <Pressable
+                                            style={[styles.modalButton, styles.deleteButton]}
+                                            onPress={handleDelete}
+                                        >
+                                            <Text style={styles.saveButtonText}>Delete</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
                             </View>
-                        )}
+                        </Modal>
+
+                        {/* Pagination */}
+                        {
+                            data?.meta && data.meta.totalPages > 1 && (
+                                <View style={styles.pagination}>
+                                    <Pressable
+                                        style={[styles.pageButton, page === 1 && styles.pageButtonDisabled]}
+                                        onPress={() => setPage(Math.max(1, page - 1))}
+                                        disabled={page === 1}
+                                    >
+                                        <Ionicons name="chevron-back" size={20} color={page === 1 ? '#CCC' : '#5A31F4'} />
+                                    </Pressable>
+                                    <Text style={styles.pageInfo}>
+                                        Page {page} of {data.meta.totalPages}
+                                    </Text>
+                                    <Pressable
+                                        style={[styles.pageButton, page === data.meta.totalPages && styles.pageButtonDisabled]}
+                                        onPress={() => setPage(Math.min(data.meta.totalPages, page + 1))}
+                                        disabled={page === data.meta.totalPages}
+                                    >
+                                        <Ionicons name="chevron-forward" size={20} color={page === data.meta.totalPages ? '#CCC' : '#5A31F4'} />
+                                    </Pressable>
+                                </View>
+                            )
+                        }
                     </>
-                )}
-            </View>
-        </ScrollView>
+                )
+                }
+            </View >
+        </ScrollView >
     );
 }
 
@@ -526,6 +566,9 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         backgroundColor: '#5A31F4',
+    },
+    deleteButton: {
+        backgroundColor: '#E53935',
     },
     cancelButtonText: {
         color: '#666',

@@ -71,6 +71,7 @@ export class AdminService {
         await this.userRepository.save(user);
 
         return {
+            isBanned: user.isBanned,
             message: user.isBanned ? 'User has been banned' : 'User has been unbanned',
         };
     }
