@@ -3,6 +3,7 @@ import { ScrollView, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet }
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 import Box from '../../src/components/ui/Box';
 import Text from '../../src/components/ui/Text';
@@ -14,6 +15,8 @@ interface VendorStats {
     totalViews: number;
     totalRedemptions: number;
     activeOffers: number;
+    inactiveOffers: number;
+    totalOffers: number;
     ratingAvg: number;
     reviewCount: number;
 }
@@ -22,7 +25,7 @@ interface Offer {
     id: string;
     title: string;
     type: string;
-    imageUrl?: string;
+    image?: string;
 }
 
 interface Review {
@@ -35,7 +38,7 @@ interface Review {
 
 const fetchStats = async (): Promise<VendorStats> => {
     const response = await api.get('/vendors/stats');
-    return response.data.data;
+    return response.data;
 };
 
 const fetchRecentOffers = async (): Promise<Offer[]> => {
@@ -63,14 +66,17 @@ const SkeletonCard = ({ width = '48%' }: { width?: string | number }) => (
 
 const StatCard = ({ label, value, color }: { label: string; value: number | string; color: string }) => (
     <Box
-        width="48%"
+        width="31%"
         backgroundColor={color as any}
-        padding="m"
+        padding="s"
         borderRadius={12}
         marginBottom="m"
+        minHeight={90}
+        justifyContent="center"
+        alignItems="center"
     >
-        <Text color="textInverted" fontSize={14}>{label}</Text>
-        <Text color="textInverted" fontSize={24} fontWeight="bold">
+        <Text color="textInverted" fontSize={12} numberOfLines={1}>{label}</Text>
+        <Text color="textInverted" fontSize={20} fontWeight="bold" adjustsFontSizeToFit>
             {value}
         </Text>
     </Box>
@@ -87,10 +93,13 @@ const OfferCard = ({ offer, onPress }: { offer: Offer; onPress: () => void }) =>
             style={styles.shadow}
         >
             <Box height={80} backgroundColor="neutral">
-                {offer.imageUrl ? (
-                    <Box flex={1} justifyContent="center" alignItems="center">
-                        <Ionicons name="image-outline" size={32} color={theme.colors.textMuted} />
-                    </Box>
+                {offer.image ? (
+                    <Image
+                        source={{ uri: offer.image }}
+                        style={{ width: '100%', height: '100%' }}
+                        contentFit="cover"
+                        transition={200}
+                    />
                 ) : (
                     <Box flex={1} justifyContent="center" alignItems="center">
                         <Ionicons name="pricetag-outline" size={32} color={theme.colors.textMuted} />
@@ -178,17 +187,22 @@ function VendorDashboardContent() {
                 {/* Stats Cards */}
                 {statsLoading ? (
                     <Box flexDirection="row" flexWrap="wrap" justifyContent="space-between" marginBottom="l">
-                        <SkeletonCard />
-                        <SkeletonCard />
-                        <SkeletonCard />
-                        <SkeletonCard />
+                        <SkeletonCard width="30%" />
+                        <SkeletonCard width="30%" />
+                        <SkeletonCard width="30%" />
+                        <SkeletonCard width="30%" />
+                        <SkeletonCard width="30%" />
+                        <SkeletonCard width="30%" />
                     </Box>
                 ) : (
                     <Box flexDirection="row" flexWrap="wrap" justifyContent="space-between" marginBottom="l">
                         <StatCard label="Total Views" value={stats?.totalViews || 0} color="cardPrimaryBackground" />
                         <StatCard label="Redemptions" value={stats?.totalRedemptions || 0} color="secondary" />
-                        <StatCard label="Active Offers" value={stats?.activeOffers || 0} color="purpleDark" />
                         <StatCard label="Rating" value={stats?.ratingAvg?.toFixed(1) || '0.0'} color="success" />
+
+                        <StatCard label="Active Offers" value={stats?.activeOffers || 0} color="purpleDark" />
+                        <StatCard label="Inactive" value={stats?.inactiveOffers || 0} color="error" />
+                        <StatCard label="Total Offers" value={stats?.totalOffers || 0} color="primary" />
                     </Box>
                 )}
 

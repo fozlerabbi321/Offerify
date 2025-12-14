@@ -82,6 +82,8 @@ export class VendorsService {
         totalViews: number;
         totalRedemptions: number;
         activeOffers: number;
+        inactiveOffers: number;
+        totalOffers: number;
         ratingAvg: number;
         reviewCount: number;
     }> {
@@ -89,19 +91,24 @@ export class VendorsService {
 
         const stats = await this.dataSource.getRepository(Offer)
             .createQueryBuilder('offer')
-            .select('SUM(offer.views)', 'totalViews')
+            .select('COUNT(offer.id)', 'totalOffers')
+            .addSelect('SUM(CASE WHEN offer.isActive = true THEN 1 ELSE 0 END)', 'activeOffers')
+            .addSelect('SUM(CASE WHEN offer.isActive = false THEN 1 ELSE 0 END)', 'inactiveOffers')
+            .addSelect('SUM(offer.views)', 'totalViews')
             .addSelect('SUM(offer.voucherClaimedCount)', 'totalRedemptions')
-            .addSelect('COUNT(offer.id)', 'activeOffers')
-            .where('offer.vendorId = :vendorId', { vendorId: vendor.id })
-            .andWhere('offer.isActive = :isActive', { isActive: true })
+            .where('offer.vendor = :vendorId', { vendorId: vendor.id })
             .getRawOne();
 
+        const safeStats = stats || {};
+
         return {
-            totalViews: parseInt(stats.totalViews) || 0,
-            totalRedemptions: parseInt(stats.totalRedemptions) || 0,
-            activeOffers: parseInt(stats.activeOffers) || 0,
-            ratingAvg: vendor.ratingAvg || 0,
-            reviewCount: vendor.reviewCount || 0,
+            totalViews: parseInt(safeStats.totalViews) || 0,
+            totalRedemptions: parseInt(safeStats.totalRedemptions) || 0,
+            activeOffers: parseInt(safeStats.activeOffers) || 0,
+            inactiveOffers: parseInt(safeStats.inactiveOffers) || 0,
+            totalOffers: parseInt(safeStats.totalOffers) || 0,
+            ratingAvg: Number(vendor.ratingAvg) || 0,
+            reviewCount: Number(vendor.reviewCount) || 0,
         };
     }
 
