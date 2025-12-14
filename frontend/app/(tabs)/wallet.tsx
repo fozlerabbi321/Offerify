@@ -8,6 +8,7 @@ import Box from '../../src/components/ui/Box';
 import Text from '../../src/components/ui/Text';
 import api from '../../src/lib/api';
 import theme from '../../src/theme/theme';
+import AuthWrapper from '../../src/components/auth/AuthWrapper';
 
 const fetchRedemptions = async () => {
     // Assuming this endpoint exists or will be created
@@ -16,6 +17,14 @@ const fetchRedemptions = async () => {
 };
 
 export default function WalletScreen() {
+    return (
+        <AuthWrapper>
+            <WalletScreenContent />
+        </AuthWrapper>
+    );
+}
+
+function WalletScreenContent() {
     const { data: redemptions, isLoading } = useQuery({
         queryKey: ['wallet'],
         queryFn: fetchRedemptions,

@@ -8,6 +8,7 @@ import Text from '../../src/components/ui/Text';
 import Box from '../../src/components/ui/Box';
 import { useAuthStore } from '../../src/store/auth.store';
 import theme from '../../src/theme/theme';
+import AuthWrapper from '../../src/components/auth/AuthWrapper';
 
 interface MenuItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -51,27 +52,18 @@ const MenuItem = ({ icon, label, onPress, color, isDanger }: MenuItemProps) => (
 );
 
 export default function AccountScreen() {
+    return (
+        <AuthWrapper>
+            <AccountScreenContent />
+        </AuthWrapper>
+    );
+}
+
+function AccountScreenContent() {
     const { user, logout } = useAuthStore();
     const router = useRouter();
 
-    if (!user) {
-        return (
-            <Container>
-                <Box flex={1} justifyContent="center" alignItems="center" padding="l">
-                    <Ionicons name="person-circle-outline" size={80} color={theme.colors.gray400} />
-                    <Text variant="header" textAlign="center" marginTop="m">Welcome to Offerify</Text>
-                    <Text variant="body" textAlign="center" color="gray500" marginTop="s" marginBottom="xl">
-                        Log in to manage your account and access exclusive offers.
-                    </Text>
-                    <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={{ width: '100%' }}>
-                        <Box padding="m" backgroundColor="primary" borderRadius={12} alignItems="center">
-                            <Text color="textInverted" fontWeight="bold">Login / Register</Text>
-                        </Box>
-                    </TouchableOpacity>
-                </Box>
-            </Container>
-        );
-    }
+    if (!user) return null; // Should not reach here due to AuthWrapper
 
     const getInitials = (nameOrEmail: string) => {
         return nameOrEmail
@@ -181,6 +173,17 @@ export default function AccountScreen() {
                         icon="wallet-outline"
                         label="Wallet"
                         onPress={() => console.log('Wallet')}
+                    />
+                    <MenuItem
+                        icon="storefront-outline"
+                        label="Offerify Vendor"
+                        onPress={() => {
+                            if (user.role === 'VENDOR') {
+                                router.push('/vendor');
+                            } else {
+                                router.push('/vendor/onboarding');
+                            }
+                        }}
                     />
                     <MenuItem
                         icon="settings-outline"

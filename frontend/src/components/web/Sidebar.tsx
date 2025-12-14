@@ -38,14 +38,16 @@ const SidebarItem = ({ href, icon, label, isActive }: { href: string, icon: any,
 };
 
 const VendorButton = () => {
-    const { user } = useAuthStore();
+    const { user, isAuthenticated } = useAuthStore();
     const router = useRouter();
     const theme = useTheme<Theme>();
 
     const isVendor = user?.role?.toUpperCase() === 'VENDOR';
 
     const handlePress = () => {
-        if (isVendor) {
+        if (!isAuthenticated) {
+            router.push('/(auth)/login');
+        } else if (isVendor) {
             router.push('/vendor');
         } else {
             router.push('/vendor/onboarding');

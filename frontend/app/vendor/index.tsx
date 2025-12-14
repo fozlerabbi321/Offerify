@@ -8,6 +8,7 @@ import Box from '../../src/components/ui/Box';
 import Text from '../../src/components/ui/Text';
 import api from '../../src/lib/api';
 import theme from '../../src/theme/theme';
+import AuthWrapper from '../../src/components/auth/AuthWrapper';
 
 interface VendorStats {
     totalViews: number;
@@ -132,6 +133,14 @@ const ReviewCard = ({ review }: { review: Review }) => (
 );
 
 export default function VendorDashboard() {
+    return (
+        <AuthWrapper>
+            <VendorDashboardContent />
+        </AuthWrapper>
+    );
+}
+
+function VendorDashboardContent() {
     const router = useRouter();
 
     const { data: stats, isLoading: statsLoading } = useQuery({

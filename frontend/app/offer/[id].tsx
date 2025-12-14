@@ -13,6 +13,7 @@ import api from '../../src/lib/api';
 import storage from '../../src/lib/storage';
 import { Theme } from '../../src/theme/theme';
 import { useAuthStore } from '../../src/store/auth.store';
+import LoginRequiredModal from '../../src/components/auth/LoginRequiredModal';
 
 // Types
 interface Offer {
@@ -319,6 +320,7 @@ export default function OfferDetailsScreen() {
 
     const [showClaimedModal, setShowClaimedModal] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     // Query
     const { data: offer, isLoading, error } = useQuery({
@@ -375,10 +377,7 @@ export default function OfferDetailsScreen() {
 
     const handleFavoritePress = () => {
         if (!isAuthenticated) {
-            Alert.alert('Login Required', 'Please login to save offers', [
-                { text: 'Cancel' },
-                { text: 'Login', onPress: () => router.push('/(auth)/login') },
-            ]);
+            setShowLoginModal(true);
             return;
         }
         favoriteMutation.mutate();
@@ -386,10 +385,7 @@ export default function OfferDetailsScreen() {
 
     const handleClaimPress = () => {
         if (!isAuthenticated) {
-            Alert.alert('Login Required', 'Please login to claim offers', [
-                { text: 'Cancel' },
-                { text: 'Login', onPress: () => router.push('/(auth)/login') },
-            ]);
+            setShowLoginModal(true);
             return;
         }
         if (offer?.isClaimed) {
@@ -519,10 +515,7 @@ export default function OfferDetailsScreen() {
                     <Text variant="subheader" fontSize={20}>Reviews</Text>
                     <TouchableOpacity onPress={() => {
                         if (!isAuthenticated) {
-                            Alert.alert('Login Required', 'Please login to write a review', [
-                                { text: 'Cancel' },
-                                { text: 'Login', onPress: () => router.push('/(auth)/login') },
-                            ]);
+                            setShowLoginModal(true);
                             return;
                         }
                         setShowReviewModal(true);
@@ -640,6 +633,15 @@ export default function OfferDetailsScreen() {
                 visible={showReviewModal}
                 onClose={() => setShowReviewModal(false)}
                 onSubmit={(rating, comment) => reviewMutation.mutate({ rating, comment })}
+            />
+
+            <LoginRequiredModal
+                visible={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                onLogin={() => {
+                    setShowLoginModal(false);
+                    router.push('/(auth)/login');
+                }}
             />
         </MainLayout>
     );

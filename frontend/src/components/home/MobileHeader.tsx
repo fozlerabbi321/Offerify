@@ -9,6 +9,8 @@ import { useLocationStore } from '../../store/location.store';
 import LocationPickerModal from './LocationPickerModal';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '../../store/auth.store';
+import LoginRequiredModal from '../auth/LoginRequiredModal';
 
 interface MobileHeaderProps {
     title?: string;
@@ -22,7 +24,9 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
     const { width } = useWindowDimensions();
     const isDesktop = width >= 768;
     const { cityName } = useLocationStore();
+    const { isAuthenticated } = useAuthStore();
     const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+    const [isLoginModalVisible, setLoginModalVisible] = useState(false);
     const router = useRouter();
 
     if (isWeb && isDesktop) return null; // Only hide on Desktop Web
@@ -98,15 +102,31 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
                             </Box>
                         </TouchableOpacity>
                         {/* Notification Icon */}
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            if (!isAuthenticated) {
+                                setLoginModalVisible(true);
+                            } else {
+                                // TODO: Handle notification press
+                            }
+                        }}>
                             <Box width={36} height={36} backgroundColor="offWhite" borderRadius={18} justifyContent="center" alignItems="center">
                                 <Ionicons name="notifications" size={20} color={theme.colors.darkGray} />
                             </Box>
                         </TouchableOpacity>
                     </Box>
                 </>
-            )}
-        </Box>
+            )
+            }
+
+            <LoginRequiredModal
+                visible={isLoginModalVisible}
+                onClose={() => setLoginModalVisible(false)}
+                onLogin={() => {
+                    setLoginModalVisible(false);
+                    router.push('/(auth)/login');
+                }}
+            />
+        </Box >
     );
 };
 
