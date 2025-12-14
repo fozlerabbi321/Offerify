@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
+import { Favorite } from '../../domain/entities/favorite.entity';
+import { OfferRedemption } from '../../domain/entities/offer-redemption.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 
@@ -17,6 +19,10 @@ export class OffersService {
         private readonly offerRepository: Repository<Offer>,
         @InjectRepository(VendorProfile)
         private readonly vendorRepository: Repository<VendorProfile>,
+        @InjectRepository(Favorite)
+        private readonly favoriteRepository: Repository<Favorite>,
+        @InjectRepository(OfferRedemption)
+        private readonly redemptionRepository: Repository<OfferRedemption>,
         private readonly categoriesService: CategoriesService,
     ) { }
 
@@ -166,17 +172,36 @@ export class OffersService {
         return query.getMany();
     }
 
-    async findOne(id: string): Promise<Offer> {
+    async findOne(id: string, userId?: string | null): Promise<Offer & { isFavorite: boolean; isClaimed: boolean }> {
         const offer = await this.offerRepository.findOne({
             where: { id },
-            relations: ['city', 'vendor'],
+            relations: ['city', 'vendor', 'vendor.city', 'category'],
         });
 
         if (!offer) {
             throw new NotFoundException(`Offer with ID ${id} not found`);
         }
 
-        return offer;
+        // Default values for unauthenticated users
+        let isFavorite = false;
+        let isClaimed = false;
+
+        if (userId) {
+            // Check if user has favorited this offer
+            const favorite = await this.favoriteRepository.findOne({
+                where: { userId, offerId: id },
+            });
+            isFavorite = !!favorite;
+
+            // Check if user has claimed this offer
+            const redemption = await this.redemptionRepository.findOne({
+                where: { user: { id: userId }, offer: { id } },
+            });
+            isClaimed = !!redemption;
+        }
+
+        // Use Object.assign to preserve getter-based properties like 'image'
+        return Object.assign(offer, { isFavorite, isClaimed }) as Offer & { isFavorite: boolean; isClaimed: boolean };
     }
 
     async update(id: string, userId: string, updateOfferDto: UpdateOfferDto): Promise<Offer> {

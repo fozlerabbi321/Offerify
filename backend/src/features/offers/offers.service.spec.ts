@@ -3,6 +3,8 @@ import { OffersService } from './offers.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
+import { Favorite } from '../../domain/entities/favorite.entity';
+import { OfferRedemption } from '../../domain/entities/offer-redemption.entity';
 import { CategoriesService } from '../categories/categories.service';
 import { Repository } from 'typeorm';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
@@ -26,6 +28,14 @@ describe('OffersService', () => {
         findOne: jest.fn(),
     };
 
+    const mockFavoriteRepository = {
+        findOne: jest.fn(),
+    };
+
+    const mockRedemptionRepository = {
+        findOne: jest.fn(),
+    };
+
     const mockCategoriesService = {
         findOne: jest.fn(),
     };
@@ -41,6 +51,14 @@ describe('OffersService', () => {
                 {
                     provide: getRepositoryToken(VendorProfile),
                     useValue: mockVendorRepository,
+                },
+                {
+                    provide: getRepositoryToken(Favorite),
+                    useValue: mockFavoriteRepository,
+                },
+                {
+                    provide: getRepositoryToken(OfferRedemption),
+                    useValue: mockRedemptionRepository,
                 },
                 {
                     provide: CategoriesService,

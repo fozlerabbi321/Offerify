@@ -12,8 +12,13 @@ import { State } from './../src/domain/entities/state.entity';
 import { Country } from './../src/domain/entities/country.entity';
 import { User, UserRole } from './../src/domain/entities/user.entity';
 import { VendorProfile } from './../src/domain/entities/vendor-profile.entity';
-import { OfferType } from './../src/domain/entities/offer.entity';
+import { Offer, OfferType } from './../src/domain/entities/offer.entity';
 import { Category } from './../src/domain/entities/category.entity';
+import { Favorite } from './../src/domain/entities/favorite.entity';
+import { OfferRedemption } from './../src/domain/entities/offer-redemption.entity';
+
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
 
 describe('OffersController (e2e)', () => {
     let app: NestFastifyApplication;
@@ -441,5 +446,166 @@ describe('OffersController (e2e)', () => {
         expect(response.body.length).toBe(2);
         expect(response.body[0].title).toBe('Offer 2'); // Most recent first
         expect(response.body[1].title).toBe('Offer 1');
+    });
+
+    it('GET /api/offers/:id should return isFavorite and isClaimed for authenticated user', async () => {
+        // Setup data
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+        const vendorRepo = dataSource.getRepository(VendorProfile);
+        const categoryRepo = dataSource.getRepository(Category);
+        const offerRepo = dataSource.getRepository(Offer);
+        const favoriteRepo = dataSource.getRepository(Favorite);
+        const redemptionRepo = dataSource.getRepository(OfferRedemption);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        // Vendor User
+        const vendorUser = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+        const vendor = await vendorRepo.save({
+            businessName: 'Burger King',
+            slug: 'burger-king',
+            user: vendorUser,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
+        // Create an offer directly
+        const offer = await offerRepo.save({
+            title: 'Test Voucher',
+            description: 'Test description',
+            type: OfferType.VOUCHER,
+            vendor,
+            city,
+            category,
+            isActive: true,
+            voucherLimit: 10,
+            voucherClaimedCount: 0,
+            voucherValue: 100,
+        });
+
+        // Customer User
+        const customer = await userRepo.save({
+            email: 'customer@example.com',
+            passwordHash: 'hash',
+            role: UserRole.CUSTOMER,
+        });
+        const customerToken = jwtService.sign({ email: customer.email, sub: customer.id, role: customer.role });
+
+        // Test 1: Initially, isFavorite and isClaimed should be false
+        const response1 = await request(app.getHttpServer())
+            .get(`/api/offers/${offer.id}`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .expect(200);
+
+        expect(response1.body.isFavorite).toBe(false);
+        expect(response1.body.isClaimed).toBe(false);
+
+        // Add favorite
+        await favoriteRepo.save({
+            userId: customer.id,
+            offerId: offer.id,
+        });
+
+        // Test 2: After favoriting, isFavorite should be true
+        const response2 = await request(app.getHttpServer())
+            .get(`/api/offers/${offer.id}`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .expect(200);
+
+        expect(response2.body.isFavorite).toBe(true);
+        expect(response2.body.isClaimed).toBe(false);
+
+        // Claim the offer
+        await redemptionRepo.save({
+            user: customer,
+            offer,
+            isUsed: false,
+        });
+
+        // Test 3: After claiming, isClaimed should be true
+        const response3 = await request(app.getHttpServer())
+            .get(`/api/offers/${offer.id}`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .expect(200);
+
+        expect(response3.body.isFavorite).toBe(true);
+        expect(response3.body.isClaimed).toBe(true);
+    });
+
+    it('GET /api/offers/:id should return isFavorite=false and isClaimed=false for unauthenticated', async () => {
+        // Setup data
+        const countryRepo = dataSource.getRepository(Country);
+        const stateRepo = dataSource.getRepository(State);
+        const cityRepo = dataSource.getRepository(City);
+        const userRepo = dataSource.getRepository(User);
+        const vendorRepo = dataSource.getRepository(VendorProfile);
+        const categoryRepo = dataSource.getRepository(Category);
+        const offerRepo = dataSource.getRepository(Offer);
+
+        const country = await countryRepo.save({ name: 'Bangladesh', isoCode: 'BD' });
+        const state = await stateRepo.save({ name: 'Dhaka', country });
+        const city = await cityRepo.save({
+            name: 'Gulshan',
+            state,
+            centerPoint: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const vendorUser = await userRepo.save({
+            email: 'vendor@example.com',
+            passwordHash: 'hash',
+            role: UserRole.VENDOR,
+        });
+        const vendor = await vendorRepo.save({
+            businessName: 'Burger King',
+            slug: 'burger-king',
+            user: vendorUser,
+            city,
+            location: { type: 'Point', coordinates: [90.4078, 23.7925] },
+        });
+
+        const category = await categoryRepo.save({
+            name: 'Food',
+            slug: 'food',
+            icon: 'utensils',
+        });
+
+        const offer = await offerRepo.save({
+            title: 'Test Offer',
+            description: 'Test description',
+            type: OfferType.DISCOUNT,
+            vendor,
+            city,
+            category,
+            isActive: true,
+        });
+
+        // Test: Unauthenticated request should return isFavorite=false and isClaimed=false
+        const response = await request(app.getHttpServer())
+            .get(`/api/offers/${offer.id}`)
+            .expect(200);
+
+        expect(response.body.isFavorite).toBe(false);
+        expect(response.body.isClaimed).toBe(false);
+        expect(response.body.vendor).toBeDefined();
+        expect(response.body.vendor.businessName).toBe('Burger King');
     });
 });

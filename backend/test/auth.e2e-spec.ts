@@ -5,6 +5,9 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { UserRole } from './../src/domain/entities/user.entity';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('AuthController (e2e)', () => {
     let app: NestFastifyApplication;
     let dataSource: DataSource;

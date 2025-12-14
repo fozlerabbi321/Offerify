@@ -5,12 +5,14 @@ import { OffersController } from './offers.controller';
 import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { City } from '../../domain/entities/city.entity';
+import { Favorite } from '../../domain/entities/favorite.entity';
+import { OfferRedemption } from '../../domain/entities/offer-redemption.entity';
 
 import { CategoriesModule } from '../categories/categories.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Offer, VendorProfile, City]),
+        TypeOrmModule.forFeature([Offer, VendorProfile, City, Favorite, OfferRedemption]),
         CategoriesModule,
     ],
     controllers: [OffersController],

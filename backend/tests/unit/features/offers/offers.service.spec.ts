@@ -5,6 +5,8 @@ import { NotFoundException } from '@nestjs/common';
 import { OffersService } from '../../../../src/features/offers/offers.service';
 import { Offer, OfferType } from '../../../../src/domain/entities/offer.entity';
 import { VendorProfile } from '../../../../src/domain/entities/vendor-profile.entity';
+import { Favorite } from '../../../../src/domain/entities/favorite.entity';
+import { OfferRedemption } from '../../../../src/domain/entities/offer-redemption.entity';
 import { CategoriesService } from '../../../../src/features/categories/categories.service';
 
 describe('OffersService', () => {
@@ -40,6 +42,18 @@ describe('OffersService', () => {
                 },
                 {
                     provide: getRepositoryToken(VendorProfile),
+                    useValue: {
+                        findOne: jest.fn(),
+                    },
+                },
+                {
+                    provide: getRepositoryToken(Favorite),
+                    useValue: {
+                        findOne: jest.fn(),
+                    },
+                },
+                {
+                    provide: getRepositoryToken(OfferRedemption),
                     useValue: {
                         findOne: jest.fn(),
                     },
@@ -211,7 +225,7 @@ describe('OffersService', () => {
 
             expect(offerRepository.findOne).toHaveBeenCalledWith({
                 where: { id: offerId },
-                relations: ['city', 'vendor'],
+                relations: ['city', 'vendor', 'vendor.city', 'category'],
             });
             expect(result).toEqual(mockOffer);
             expect(result.city).toBeDefined();

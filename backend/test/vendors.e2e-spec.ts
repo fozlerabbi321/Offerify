@@ -9,6 +9,9 @@ import { State } from './../src/domain/entities/state.entity';
 import { Country } from './../src/domain/entities/country.entity';
 import { User, UserRole } from './../src/domain/entities/user.entity';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('VendorsController (e2e)', () => {
     let app: NestFastifyApplication;
     let dataSource: DataSource;

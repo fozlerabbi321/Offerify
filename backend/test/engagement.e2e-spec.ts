@@ -11,6 +11,9 @@ import { User, UserRole } from './../src/domain/entities/user.entity';
 import { VendorProfile } from './../src/domain/entities/vendor-profile.entity';
 import { Offer, OfferType } from './../src/domain/entities/offer.entity';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('EngagementController (e2e)', () => {
     let app: NestFastifyApplication;
     let dataSource: DataSource;

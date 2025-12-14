@@ -71,7 +71,7 @@ test-e2e: ## Run backend E2E tests
 	@cd backend && npm run test:e2e
 	@echo "$(GREEN)✓ E2E tests passed$(NC)"
 
-test: test-unit test-e2e ## Run all backend tests (unit + E2E)
+test: test-unit test-e2e ## Run all backend tests (unit + E2E), then use 'make dev'
 
 dev: setup test-unit ## Full development workflow (setup + unit tests + run)
 	@echo "$(GREEN)========================================$(NC)"

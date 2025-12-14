@@ -4,6 +4,9 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('AppController (e2e)', () => {
   let app: NestFastifyApplication;
   let dataSource: DataSource;

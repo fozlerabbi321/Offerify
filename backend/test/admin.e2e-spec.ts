@@ -16,6 +16,9 @@ import { State } from './../src/domain/entities/state.entity';
 import { City } from './../src/domain/entities/city.entity';
 import { ResponseInterceptor } from './../src/common/interceptors/response.interceptor';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('AdminController (e2e)', () => {
     let app: NestFastifyApplication;
     let dataSource: DataSource;

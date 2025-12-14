@@ -6,6 +6,9 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import contentParser from '@fastify/multipart';
 import { join } from 'path';
 
+// Increase timeout for E2E tests with database operations
+jest.setTimeout(30000);
+
 describe('MediaController (e2e)', () => {
     let app: NestFastifyApplication;
 

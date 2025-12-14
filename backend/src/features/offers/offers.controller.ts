@@ -6,9 +6,8 @@ import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { GetOffersDto } from './dto/get-offers.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../../domain/entities/user.entity';
 
 @ApiTags('Offers')
 @ApiBearerAuth()
@@ -91,12 +90,14 @@ export class OffersController {
     }
 
     @Get(':id')
+    @UseGuards(OptionalJwtAuthGuard)
     @ApiOperation({ summary: 'Get an offer by ID' })
     @ApiParam({ name: 'id', description: 'Offer UUID' })
     @ApiResponse({ status: 200, description: 'Offer found' })
     @ApiResponse({ status: 404, description: 'Offer not found' })
-    async findOne(@Param('id') id: string) {
-        return this.offersService.findOne(id);
+    async findOne(@Param('id') id: string, @Req() req: FastifyRequest) {
+        const userId = (req as any).user?.userId || null;
+        return this.offersService.findOne(id, userId);
     }
 
     @Patch(':id')
@@ -107,7 +108,7 @@ export class OffersController {
     @ApiResponse({ status: 404, description: 'Offer not found' })
     @ApiResponse({ status: 403, description: 'Forbidden - You do not own this offer' })
     async update(@Param('id') id: string, @Req() req, @Body() updateOfferDto: UpdateOfferDto) {
-        return this.offersService.update(id, (req as any).user.id, updateOfferDto);
+        return this.offersService.update(id, (req as any).user.userId, updateOfferDto);
     }
 
     @Delete(':id')
@@ -119,7 +120,7 @@ export class OffersController {
     @ApiResponse({ status: 404, description: 'Offer not found' })
     @ApiResponse({ status: 403, description: 'Forbidden - You do not own this offer' })
     async remove(@Param('id') id: string, @Req() req) {
-        return this.offersService.remove(id, (req as any).user.id);
+        return this.offersService.remove(id, (req as any).user.userId);
     }
 
     @Get('my-offers')
