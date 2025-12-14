@@ -153,13 +153,7 @@ export default function AdminLayout() {
                     <Text style={styles.logoutText}>Logout</Text>
                 </Pressable>
 
-                <Pressable
-                    style={styles.backToSiteButton}
-                    onPress={() => router.replace('/')}
-                >
-                    <Ionicons name="arrow-back-outline" size={20} color="#666" />
-                    <Text style={styles.backToSiteText}>Back to Site</Text>
-                </Pressable>
+
             </View>
         </View>
     );
@@ -335,19 +329,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         fontWeight: '500',
     },
-    backToSiteButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 8,
-    },
-    backToSiteText: {
-        color: '#666',
-        marginLeft: 10,
-        fontWeight: '500',
-    },
+
     mobileHeader: {
         flexDirection: 'row',
         alignItems: 'center',

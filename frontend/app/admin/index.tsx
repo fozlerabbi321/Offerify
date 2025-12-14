@@ -104,25 +104,25 @@ export default function AdminDashboard() {
                         title="Manage Users"
                         description="View, search, and ban/unban users"
                         icon="people-outline"
-                        onPress={() => router.push('/(admin)/users' as any)}
+                        onPress={() => router.push('/admin/users' as any)}
                     />
                     <QuickAction
                         title="Moderate Reviews"
                         description="Review and delete inappropriate content"
                         icon="star-outline"
-                        onPress={() => router.push('/(admin)/reviews' as any)}
+                        onPress={() => router.push('/admin/reviews' as any)}
                     />
                     <QuickAction
                         title="Edit Pages"
                         description="Update About, Privacy, Terms pages"
                         icon="document-text-outline"
-                        onPress={() => router.push('/(admin)/pages' as any)}
+                        onPress={() => router.push('/admin/pages' as any)}
                     />
                     <QuickAction
                         title="App Settings"
                         description="Configure global app settings"
                         icon="settings-outline"
-                        onPress={() => router.push('/(admin)/settings' as any)}
+                        onPress={() => router.push('/admin/settings' as any)}
                     />
                 </View>
             </View>

@@ -45,7 +45,11 @@ const LoginScreen = () => {
 
             if (user && access_token) {
                 login(user, access_token);
-                router.replace('/');
+                if (user.role === 'admin') {
+                    router.replace('/admin');
+                } else {
+                    router.replace('/');
+                }
             } else {
                 // Fallback if structure is different or interceptor didn't trigger as expected
                 // This might happen if the backend returns { accessToken, ... } directly without 'data' wrapper
