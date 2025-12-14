@@ -26,6 +26,13 @@ export class VendorProfile {
     @Column()
     businessName: string;
 
+    @Column({
+        type: 'enum',
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending',
+    })
+    status: 'pending' | 'approved' | 'rejected';
+
     @Column({ unique: true })
     slug: string;
 

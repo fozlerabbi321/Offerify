@@ -71,10 +71,36 @@ export class AdminService {
         await this.userRepository.save(user);
 
         return {
-            id: user.id,
-            isBanned: user.isBanned,
             message: user.isBanned ? 'User has been banned' : 'User has been unbanned',
         };
+    }
+
+    async updateUser(userId: string, data: Partial<User>) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        // Only allow updating name and role for now
+        if (data.name) user.name = data.name;
+        if (data.role) user.role = data.role;
+
+        await this.userRepository.save(user);
+
+        return user;
+    }
+
+    async deleteUser(userId: string) {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['vendorProfile', 'favorites', 'reviews'],
+        });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        await this.userRepository.remove(user); // Cascade delete should handle details
+        return { message: 'User deleted successfully' };
     }
 
     // ============================================================
@@ -100,6 +126,7 @@ export class AdminService {
             .take(limit)
             .getManyAndCount();
 
+
         return {
             items: vendors,
             meta: {
@@ -109,6 +136,41 @@ export class AdminService {
                 totalPages: Math.ceil(total / limit),
             },
         };
+    }
+
+    async updateVendorStatus(vendorId: string, status: string) {
+        const vendor = await this.vendorRepository.findOne({ where: { id: vendorId } });
+        if (!vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
+
+        vendor.status = status as any;
+        await this.vendorRepository.save(vendor);
+
+        return vendor;
+    }
+
+    async updateVendorProfile(vendorId: string, data: Partial<VendorProfile>) {
+        const vendor = await this.vendorRepository.findOne({ where: { id: vendorId } });
+        if (!vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
+
+        if (data.businessName) vendor.businessName = data.businessName;
+        if (data.contactPhone) vendor.contactPhone = data.contactPhone;
+
+        await this.vendorRepository.save(vendor);
+        return vendor;
+    }
+
+    async deleteVendor(vendorId: string) {
+        const vendor = await this.vendorRepository.findOne({ where: { id: vendorId } });
+        if (!vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
+
+        await this.vendorRepository.remove(vendor);
+        return { message: 'Vendor deleted successfully' };
     }
 
     // ============================================================

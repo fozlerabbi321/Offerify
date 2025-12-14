@@ -60,6 +60,7 @@ export interface Vendor {
     city?: {
         name: string;
     };
+    status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface PaginatedResponse<T> {
@@ -204,6 +205,71 @@ export const useUpdateSettings = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+        },
+    });
+};
+
+export const useUpdateUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ userId, data }: { userId: string; data: Partial<User> }) => {
+            const response = await api.patch(`/admin/users/${userId}`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+        },
+    });
+};
+
+export const useDeleteUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (userId: string) => {
+            const response = await api.delete(`/admin/users/${userId}`);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+        },
+    });
+};
+
+export const useUpdateVendorStatus = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ vendorId, status }: { vendorId: string; status: string }) => {
+            const response = await api.patch(`/admin/vendors/${vendorId}/status`, { status });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] });
+        },
+    });
+};
+
+export const useUpdateVendorProfile = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ vendorId, data }: { vendorId: string; data: Partial<Vendor> }) => {
+            const response = await api.patch(`/admin/vendors/${vendorId}`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] });
+        },
+    });
+};
+
+export const useDeleteVendor = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (vendorId: string) => {
+            const response = await api.delete(`/admin/vendors/${vendorId}`);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'vendors'] });
         },
     });
 };

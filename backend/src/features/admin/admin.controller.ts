@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagg
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../../domain/entities/user.entity';
+import { UserRole, User } from '../../domain/entities/user.entity';
 import { AdminService } from './admin.service';
 import { ListUsersDto } from './dto/list-users.dto';
 import { ListVendorsDto } from './dto/list-vendors.dto';
@@ -59,6 +59,20 @@ export class AdminController {
         return this.adminService.toggleBan(userId);
     }
 
+    @Patch('users/:id')
+    @ApiOperation({ summary: 'Update user details' })
+    @ApiResponse({ status: 200, description: 'User updated' })
+    async updateUser(@Param('id') userId: string, @Body() data: Partial<User>) {
+        return this.adminService.updateUser(userId, data);
+    }
+
+    @Delete('users/:id')
+    @ApiOperation({ summary: 'Delete user' })
+    @ApiResponse({ status: 200, description: 'User deleted' })
+    async deleteUser(@Param('id') userId: string) {
+        return this.adminService.deleteUser(userId);
+    }
+
     // ============================================================
     // VENDOR MANAGEMENT
     // ============================================================
@@ -68,6 +82,27 @@ export class AdminController {
     @ApiResponse({ status: 200, description: 'Returns paginated list of vendors' })
     async listVendors(@Query() dto: ListVendorsDto) {
         return this.adminService.listVendors(dto);
+    }
+
+    @Patch('vendors/:id/status')
+    @ApiOperation({ summary: 'Update vendor status (approve/reject)' })
+    @ApiResponse({ status: 200, description: 'Vendor status updated' })
+    async updateVendorStatus(@Param('id') vendorId: string, @Body('status') status: string) {
+        return this.adminService.updateVendorStatus(vendorId, status);
+    }
+
+    @Patch('vendors/:id')
+    @ApiOperation({ summary: 'Update vendor details' })
+    @ApiResponse({ status: 200, description: 'Vendor updated' })
+    async updateVendorProfile(@Param('id') vendorId: string, @Body() data: any) {
+        return this.adminService.updateVendorProfile(vendorId, data);
+    }
+
+    @Delete('vendors/:id')
+    @ApiOperation({ summary: 'Delete vendor' })
+    @ApiResponse({ status: 200, description: 'Vendor deleted' })
+    async deleteVendor(@Param('id') vendorId: string) {
+        return this.adminService.deleteVendor(vendorId);
     }
 
     // ============================================================

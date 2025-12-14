@@ -49,13 +49,13 @@ export class User {
     @Column({ default: false, name: 'is_banned' })
     isBanned: boolean;
 
-    @OneToOne(() => VendorProfile, (vendor) => vendor.user, { nullable: true })
+    @OneToOne(() => VendorProfile, (vendor) => vendor.user, { nullable: true, cascade: true })
     vendorProfile: VendorProfile;
 
-    @OneToMany(() => Favorite, (favorite) => favorite.user)
+    @OneToMany(() => Favorite, (favorite) => favorite.user, { cascade: true })
     favorites: Favorite[];
 
-    @OneToMany(() => Review, (review) => review.user)
+    @OneToMany(() => Review, (review) => review.user, { cascade: true })
     reviews: Review[];
 
     @CreateDateColumn()
