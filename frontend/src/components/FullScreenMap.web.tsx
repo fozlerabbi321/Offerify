@@ -77,18 +77,27 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {offers?.map((offer) => {
+                {offers?.map((offer, index) => {
                     const coordinates = offer.vendor?.location?.coordinates ||
                         offer.city?.centerPoint?.coordinates;
 
-                    if (!coordinates || coordinates.length !== 2) return null;
+                    if (!coordinates || coordinates.length !== 2) {
+                        return null;
+                    }
 
-                    const [longitude, latitude] = coordinates;
+                    let [longitude, latitude] = coordinates;
+
+                    // Add small random offset to prevent markers at exact same location from stacking
+                    // Offset is ~0.0005 degrees (~50 meters) in random direction
+                    const offsetLat = (Math.random() - 0.5) * 0.001;
+                    const offsetLng = (Math.random() - 0.5) * 0.001;
+                    latitude = parseFloat(latitude) + offsetLat;
+                    longitude = parseFloat(longitude) + offsetLng;
 
                     return (
                         <Marker
                             key={offer.id}
-                            position={[parseFloat(latitude), parseFloat(longitude)]}
+                            position={[latitude, longitude]}
                             icon={createCustomIcon(offer)}
                             eventHandlers={{
                                 click: () => {

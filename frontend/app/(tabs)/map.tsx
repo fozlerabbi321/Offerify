@@ -4,10 +4,12 @@ import Box from '../../src/components/ui/Box';
 import Text from '../../src/components/ui/Text';
 import api from '../../src/lib/api';
 import FullScreenMap from '../../src/components/FullScreenMap';
+import { useLocationStore } from '../../src/store/location.store';
 
-const fetchOffers = async () => {
+const fetchOffers = async (cityId?: number) => {
     try {
-        const response = await api.get('/offers');
+        const params = cityId ? { cityId } : {};
+        const response = await api.get('/offers', { params });
         console.log('Offers API response:', response);
         console.log('Offers data:', response.data);
 
@@ -17,6 +19,15 @@ const fetchOffers = async () => {
             : (response.data.data || []);
 
         console.log('Extracted offers:', offers);
+        console.log('Total offers count:', offers.length);
+
+        // Debug: Check how many offers have coordinates
+        const offersWithCoords = offers.filter((o: any) => {
+            const coords = o.vendor?.location?.coordinates || o.city?.centerPoint?.coordinates;
+            return coords && coords.length === 2;
+        });
+        console.log('Offers with valid coordinates:', offersWithCoords.length);
+
         return offers;
     } catch (error) {
         console.error('Failed to fetch offers:', error);
@@ -25,9 +36,11 @@ const fetchOffers = async () => {
 };
 
 export default function MapScreen() {
+    const { cityId } = useLocationStore();
+
     const { data: offers, isLoading } = useQuery({
-        queryKey: ['offers'],
-        queryFn: fetchOffers,
+        queryKey: ['offers', cityId],
+        queryFn: () => fetchOffers(cityId || undefined),
     });
 
     return (

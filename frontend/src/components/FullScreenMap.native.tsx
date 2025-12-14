@@ -37,14 +37,21 @@ export default function FullScreenMap({ offers }: FullScreenMapProps) {
 
                 if (!coordinates || coordinates.length !== 2) return null;
 
-                const [longitude, latitude] = coordinates;
+                let [longitude, latitude] = coordinates;
+
+                // Add small random offset to prevent markers at exact same location from stacking
+                // Offset is ~0.0005 degrees (~50 meters) in random direction
+                const offsetLat = (Math.random() - 0.5) * 0.001;
+                const offsetLng = (Math.random() - 0.5) * 0.001;
+                latitude = parseFloat(latitude) + offsetLat;
+                longitude = parseFloat(longitude) + offsetLng;
 
                 return (
                     <Marker
                         key={offer.id}
                         coordinate={{
-                            latitude: parseFloat(latitude),
-                            longitude: parseFloat(longitude),
+                            latitude,
+                            longitude,
                         }}
                         onPress={() => router.push(`/offer/${offer.id}`)}
                     >
