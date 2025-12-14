@@ -16,11 +16,17 @@ export class CreateOfferDto {
     @IsEnum(OfferType)
     type: OfferType;
 
-
+    @ApiPropertyOptional({
+        example: 'uuid-of-shop',
+        description: 'Shop ID for this offer. If not provided, defaults to vendor\'s default shop.'
+    })
+    @IsOptional()
+    @IsUUID()
+    shopId?: string;
 
     @ApiPropertyOptional({
         example: 1,
-        description: 'Target city ID for this offer. If not provided, defaults to vendor\'s operating city (Multi-Branch Support).'
+        description: 'Target city ID for this offer. If not provided, inherits from shop\'s city.'
     })
     @IsOptional()
     @Type(() => Number)

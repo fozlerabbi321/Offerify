@@ -5,6 +5,7 @@ import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { User, UserRole } from '../../domain/entities/user.entity';
 import { City } from '../../domain/entities/city.entity';
 import { Offer } from '../../domain/entities/offer.entity';
+import { Shop } from '../../domain/entities/shop.entity';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 
 @Injectable()
@@ -58,7 +59,20 @@ export class VendorsService {
             user.role = UserRole.VENDOR;
             await manager.save(user);
 
-            // 7. Update memory object to reflect the change
+            // 7. Create default shop for the vendor
+            const defaultShop = manager.create(Shop, {
+                name: `${dto.businessName} - Main Branch`,
+                vendor: savedVendor,
+                city: city,
+                location: {
+                    type: 'Point',
+                    coordinates: [dto.longitude, dto.latitude],
+                },
+                isDefault: true,
+            });
+            await manager.save(defaultShop);
+
+            // 8. Update memory object to reflect the change
             vendor.user = user;
 
             return savedVendor;

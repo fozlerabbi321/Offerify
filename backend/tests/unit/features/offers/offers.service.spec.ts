@@ -7,6 +7,7 @@ import { Offer, OfferType } from '../../../../src/domain/entities/offer.entity';
 import { VendorProfile } from '../../../../src/domain/entities/vendor-profile.entity';
 import { Favorite } from '../../../../src/domain/entities/favorite.entity';
 import { OfferRedemption } from '../../../../src/domain/entities/offer-redemption.entity';
+import { Shop } from '../../../../src/domain/entities/shop.entity';
 import { CategoriesService } from '../../../../src/features/categories/categories.service';
 
 describe('OffersService', () => {
@@ -54,6 +55,12 @@ describe('OffersService', () => {
                 },
                 {
                     provide: getRepositoryToken(OfferRedemption),
+                    useValue: {
+                        findOne: jest.fn(),
+                    },
+                },
+                {
+                    provide: getRepositoryToken(Shop),
                     useValue: {
                         findOne: jest.fn(),
                     },
@@ -117,7 +124,7 @@ describe('OffersService', () => {
 
             expect(vendorRepository.findOne).toHaveBeenCalledWith({
                 where: { user: { id: 'user-uuid' } },
-                relations: ['city'],
+                relations: ['city', 'shops'],
             });
             expect(offerRepository.create).toHaveBeenCalledWith({
                 ...createOfferDto,

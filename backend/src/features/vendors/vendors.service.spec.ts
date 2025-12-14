@@ -87,7 +87,7 @@ describe('VendorsService', () => {
 
             expect(result).toEqual(mockVendor);
             expect(mockEntityManager.create).toHaveBeenCalled();
-            expect(mockEntityManager.save).toHaveBeenCalledTimes(2); // Vendor + User
+            expect(mockEntityManager.save).toHaveBeenCalledTimes(3); // Vendor + User + Default Shop
             expect(mockEntityManager.save).toHaveBeenCalledWith(expect.objectContaining({
                 id: userId,
                 role: UserRole.VENDOR,

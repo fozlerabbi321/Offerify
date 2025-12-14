@@ -6,6 +6,7 @@ import { Offer } from '../../domain/entities/offer.entity';
 import { VendorProfile } from '../../domain/entities/vendor-profile.entity';
 import { Favorite } from '../../domain/entities/favorite.entity';
 import { OfferRedemption } from '../../domain/entities/offer-redemption.entity';
+import { Shop } from '../../domain/entities/shop.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 
@@ -23,14 +24,16 @@ export class OffersService {
         private readonly favoriteRepository: Repository<Favorite>,
         @InjectRepository(OfferRedemption)
         private readonly redemptionRepository: Repository<OfferRedemption>,
+        @InjectRepository(Shop)
+        private readonly shopRepository: Repository<Shop>,
         private readonly categoriesService: CategoriesService,
     ) { }
 
     async createOffer(userId: string, createOfferDto: CreateOfferDto, file?: MultipartFile): Promise<Offer> {
-        // Fetch vendor with city relation to get operating city
+        // Fetch vendor with city and shops relations
         const vendor = await this.vendorRepository.findOne({
             where: { user: { id: userId } },
-            relations: ['city'],
+            relations: ['city', 'shops'],
         });
 
         if (!vendor) {
@@ -43,8 +46,26 @@ export class OffersService {
             throw new NotFoundException(`Category with ID ${createOfferDto.categoryId} not found`);
         }
 
-        // Multi-Branch Logic: Use provided cityId or fallback to vendor's operating city
-        const targetCityId = createOfferDto.cityId || vendor.cityId;
+        // Resolve shop: Use provided shopId or fallback to default shop
+        let shop: Shop | null = null;
+        if (createOfferDto.shopId) {
+            shop = await this.shopRepository.findOne({
+                where: { id: createOfferDto.shopId, vendor: { id: vendor.id } },
+                relations: ['city'],
+            });
+            if (!shop) {
+                throw new NotFoundException(`Shop with ID ${createOfferDto.shopId} not found or does not belong to vendor`);
+            }
+        } else {
+            // Find default shop
+            shop = await this.shopRepository.findOne({
+                where: { vendor: { id: vendor.id }, isDefault: true },
+                relations: ['city'],
+            });
+        }
+
+        // City comes from shop (if available) or fallback to vendor's city
+        const targetCityId = shop?.cityId || createOfferDto.cityId || vendor.cityId;
 
         let imagePath: string | undefined;
         if (file) {
@@ -56,10 +77,11 @@ export class OffersService {
             }
         }
 
-        // Create offer with the target city and vendor
+        // Create offer with shop, city, and vendor
         const offer = this.offerRepository.create({
             ...createOfferDto,
-            city: { id: targetCityId } as any, // Link to City entity
+            shop: shop || undefined,
+            city: { id: targetCityId } as any,
             category: { id: createOfferDto.categoryId } as any,
             vendor: vendor,
             imagePath: imagePath,
@@ -74,17 +96,17 @@ export class OffersService {
             throw error;
         }
 
-        // Fetch the offer again with city relation populated for response
-        const offerWithCity = await this.offerRepository.findOne({
+        // Fetch the offer again with relations populated for response
+        const offerWithRelations = await this.offerRepository.findOne({
             where: { id: savedOffer.id },
-            relations: ['city', 'category'],
+            relations: ['city', 'category', 'shop'],
         });
 
-        if (!offerWithCity) {
+        if (!offerWithRelations) {
             throw new NotFoundException(`Failed to retrieve created offer`);
         }
 
-        return offerWithCity;
+        return offerWithRelations;
     }
 
     async findAll(options: {

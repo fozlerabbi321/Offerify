@@ -23,6 +23,13 @@ interface City {
     name: string;
 }
 
+interface Shop {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    city?: { id: number; name: string };
+}
+
 // API Functions
 const fetchCategories = async (): Promise<Category[]> => {
     const response = await api.get('/categories');
@@ -31,6 +38,11 @@ const fetchCategories = async (): Promise<Category[]> => {
 
 const fetchCities = async (): Promise<City[]> => {
     const response = await api.get('/location/cities');
+    return response.data || [];
+};
+
+const fetchShops = async (): Promise<Shop[]> => {
+    const response = await api.get('/vendor/shops');
     return response.data || [];
 };
 
@@ -95,6 +107,8 @@ export default function PostOfferScreen() {
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [showCityModal, setShowCityModal] = useState(false);
     const [showTypeModal, setShowTypeModal] = useState(false);
+    const [showShopModal, setShowShopModal] = useState(false);
+    const [shopId, setShopId] = useState<string | null>(null);
 
     // Fetch offer data for edit mode
     const { data: offerData, isLoading: isLoadingOffer } = useQuery({
@@ -128,6 +142,11 @@ export default function PostOfferScreen() {
     const { data: cities = [] } = useQuery({
         queryKey: ['cities'],
         queryFn: fetchCities,
+    });
+
+    const { data: shops = [] } = useQuery({
+        queryKey: ['vendorShops'],
+        queryFn: fetchShops,
     });
 
     // Create Mutation
@@ -280,6 +299,10 @@ export default function PostOfferScreen() {
                 formData.append('cityId', cityId.toString());
             }
 
+            if (shopId) {
+                formData.append('shopId', shopId);
+            }
+
             if (offerType === 'discount' && discountPercentage) {
                 formData.append('discountPercentage', discountPercentage);
             }
@@ -321,6 +344,7 @@ export default function PostOfferScreen() {
 
     const selectedCategory = categories.find(c => c.id === categoryId);
     const selectedCity = cities.find(c => c.id === cityId);
+    const selectedShop = shops.find(s => s.id === shopId);
     const selectedType = OFFER_TYPES.find(t => t.value === offerType);
     const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -538,8 +562,45 @@ export default function PostOfferScreen() {
                 </>
             )}
 
-            {/* City Selector (Create mode only) */}
-            {!isEditMode && (
+            {/* Shop Selector (Create mode only) */}
+            {!isEditMode && shops.length > 0 && (
+                <>
+                    <Text marginBottom="s" fontWeight="600">Shop Location</Text>
+                    <TouchableOpacity onPress={() => setShowShopModal(true)}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            padding="m"
+                            backgroundColor="white"
+                            borderRadius={8}
+                            borderWidth={1}
+                            borderColor={shopId ? 'primary' : 'gray'}
+                            marginBottom="m"
+                        >
+                            <Box>
+                                <Text color={shopId ? 'text' : 'darkGray'}>
+                                    {selectedShop?.name || 'Use default shop'}
+                                </Text>
+                                {selectedShop?.city && (
+                                    <Text fontSize={12} color="darkGray">{selectedShop.city.name}</Text>
+                                )}
+                            </Box>
+                            <Box flexDirection="row" alignItems="center">
+                                {shopId && (
+                                    <TouchableOpacity onPress={() => setShopId(null)} style={{ marginRight: 8 }}>
+                                        <Ionicons name="close-circle" size={20} color={theme.colors.darkGray} />
+                                    </TouchableOpacity>
+                                )}
+                                <Ionicons name="chevron-down" size={20} color={theme.colors.darkGray} />
+                            </Box>
+                        </Box>
+                    </TouchableOpacity>
+                </>
+            )}
+
+            {/* City Selector (Create mode only) - Hidden when shop is selected */}
+            {!isEditMode && !shopId && (
                 <>
                     <Text marginBottom="s" fontWeight="600">Target City (Optional)</Text>
                     <TouchableOpacity onPress={() => setShowCityModal(true)}>
@@ -689,6 +750,60 @@ export default function PostOfferScreen() {
                                         <Text color={cityId === item.id ? 'textInverted' : 'text'}>
                                             {item.name}
                                         </Text>
+                                    </Box>
+                                </TouchableOpacity>
+                            )}
+                        />
+                    </Box>
+                </Box>
+            </Modal>
+
+            {/* Shop Modal */}
+            <Modal visible={showShopModal} animationType="slide" transparent>
+                <Box flex={1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} justifyContent="flex-end">
+                    <Box backgroundColor="white" borderTopLeftRadius={20} borderTopRightRadius={20} padding="l" maxHeight="60%">
+                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
+                            <Text variant="subheader">Select Shop</Text>
+                            <TouchableOpacity onPress={() => setShowShopModal(false)}>
+                                <Ionicons name="close" size={24} color={theme.colors.text} />
+                            </TouchableOpacity>
+                        </Box>
+                        <FlatList
+                            data={shops}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setShopId(item.id);
+                                        setShowShopModal(false);
+                                    }}
+                                >
+                                    <Box
+                                        padding="m"
+                                        backgroundColor={shopId === item.id ? 'primary' : 'offWhite'}
+                                        borderRadius={8}
+                                        marginBottom="s"
+                                        flexDirection="row"
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                    >
+                                        <Box>
+                                            <Text color={shopId === item.id ? 'textInverted' : 'text'} fontWeight="600">
+                                                {item.name}
+                                            </Text>
+                                            {item.city && (
+                                                <Text fontSize={12} color={shopId === item.id ? 'textInverted' : 'darkGray'}>
+                                                    {item.city.name}
+                                                </Text>
+                                            )}
+                                        </Box>
+                                        {item.isDefault && (
+                                            <Box backgroundColor={shopId === item.id ? 'white' : 'primary'} paddingHorizontal="s" paddingVertical="xs" borderRadius={4}>
+                                                <Text fontSize={10} fontWeight="bold" color={shopId === item.id ? 'primary' : 'textInverted'}>
+                                                    DEFAULT
+                                                </Text>
+                                            </Box>
+                                        )}
                                     </Box>
                                 </TouchableOpacity>
                             )}

@@ -221,7 +221,19 @@ function VendorDashboardContent() {
                             <Text marginTop="s" fontWeight="bold">My Offers</Text>
                         </Box>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push('/vendor/scan')} style={{ width: '48%' }}>
+                    <TouchableOpacity onPress={() => router.push('/vendor/shops')} style={{ width: '48%' }}>
+                        <Box
+                            backgroundColor="cardBackground"
+                            padding="m"
+                            borderRadius={12}
+                            alignItems="center"
+                            style={styles.shadow}
+                        >
+                            <Ionicons name="business-outline" size={32} color={theme.colors.secondary} />
+                            <Text marginTop="s" fontWeight="bold">Manage Shops</Text>
+                        </Box>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/vendor/scan')} style={{ width: '48%', marginTop: 12 }}>
                         <Box
                             backgroundColor="cardBackground"
                             padding="m"
@@ -243,18 +255,6 @@ function VendorDashboardContent() {
                         >
                             <Ionicons name="create-outline" size={32} color={theme.colors.primary} />
                             <Text marginTop="s" fontWeight="bold">Create Offer</Text>
-                        </Box>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push('/vendor/profile')} style={{ width: '48%', marginTop: 12 }}>
-                        <Box
-                            backgroundColor="cardBackground"
-                            padding="m"
-                            borderRadius={12}
-                            alignItems="center"
-                            style={styles.shadow}
-                        >
-                            <Ionicons name="storefront-outline" size={32} color={theme.colors.primary} />
-                            <Text marginTop="s" fontWeight="bold">My Profile</Text>
                         </Box>
                     </TouchableOpacity>
                 </Box>

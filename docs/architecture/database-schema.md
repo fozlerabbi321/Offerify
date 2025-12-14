@@ -11,11 +11,15 @@ This schema implements the **Global CSC (Country-State-City)** architecture and 
       * *Key Concept:* The `cities` table represents the hyper-local **"Zone"** (e.g., Gulshan) and contains a geospatial center point for the Auto-Detect feature.
 2.  **Users & Vendors:**
       * **`users`**: Base authentication entity (Customers, Vendors, Admins).
-      * **`vendor_profiles`**: Extension of the user table. It is linked to a specific `city_id` (Operating Zone) and has a precise `shop_location` (Map Pin).
-3.  **Offers (Unified):**
+      * **`vendor_profiles`**: Extension of the user table. Linked to a `city_id` (HQ Zone) with a `location` (HQ coordinates).
+3.  **Shops (Multi-Branch Support):**
+      * **`shops`**: Physical outlet locations for vendors.
+      * A vendor can have **multiple shops** in different zones.
+      * Each shop has its own `city_id` and `location` coordinates.
+4.  **Offers (Unified):**
       * **`offers`**: Central table for **Discounts**, **Coupons**, and **Vouchers**.
-      * Linked to `vendor_profiles` (Owner) and `cities` (Target Zone).
-4.  **Engagement:**
+      * Linked to `vendor_profiles` (Owner), `shops` (Physical Location), and `cities` (Zone).
+5.  **Engagement:**
       * **`offer_redemptions`**: Tracks who claimed a voucher or copied a coupon code.
       * **`favorites`**: Users saving deals.
       * **`reviews`**: Ratings for vendors.
@@ -28,18 +32,19 @@ This schema implements the **Global CSC (Country-State-City)** architecture and 
 erDiagram
     COUNTRIES ||--|{ STATES : contains
     STATES ||--|{ CITIES : contains
-    CITIES ||--|{ VENDOR_PROFILES : "operating_zone"
-    CITIES ||--|{ OFFERS : "targeted_zone"
+    CITIES ||--|{ VENDOR_PROFILES : "hq_zone"
+    CITIES ||--|{ SHOPS : "shop_zone"
 
     USERS ||--|| VENDOR_PROFILES : "has_profile"
     USERS ||--|{ OFFER_REDEMPTIONS : "redeems/claims"
     USERS ||--|{ REVIEWS : writes
     USERS ||--|{ FAVORITES : saves
 
+    VENDOR_PROFILES ||--|{ SHOPS : "has_shops"
     VENDOR_PROFILES ||--|{ OFFERS : posts
+    SHOPS ||--|{ OFFERS : "located_at"
 
     OFFERS ||--|{ OFFER_REDEMPTIONS : "claimed_as"
-    OFFERS ||--|{ REVIEWS : "reviewed_on"
     OFFERS ||--|{ FAVORITES : "favorited_by"
 
     CITIES {
@@ -47,15 +52,21 @@ erDiagram
         string name
         geography center_point
     }
+    SHOPS {
+        uuid id PK
+        uuid vendor_id FK
+        int city_id FK
+        string name
+        geography location
+        boolean is_default
+    }
     OFFERS {
         uuid id PK
         enum type "discount|coupon|voucher"
         uuid vendor_id FK
+        uuid shop_id FK
         int city_id FK
         string title
-        decimal price
-        string coupon_code
-        int voucher_limit
     }
 ```
 
@@ -155,18 +166,51 @@ CREATE TABLE vendor_profiles (
     follower_count INT DEFAULT 0
 );
 
--- Spatial Index for "Shop Near Me" map view
+-- Spatial Index for "Vendor HQ" map view
 CREATE INDEX idx_vendor_location ON vendor_profiles USING GIST (shop_location);
 ```
 
-#### **D. Offers Module (Unified Table)**
+#### **D. Shops Module (Multi-Branch Support)**
+
+```sql
+-- Physical outlet locations for vendors
+CREATE TABLE shops (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_id UUID NOT NULL REFERENCES vendor_profiles(user_id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL, -- e.g., "Bata Gulshan"
+    
+    -- Shop Location Zone
+    city_id INT NOT NULL REFERENCES cities(id),
+    
+    -- Exact Pin location on map
+    location GEOGRAPHY(POINT, 4326),
+    address TEXT,
+    contact_number VARCHAR(50),
+    
+    -- First shop is marked as default
+    is_default BOOLEAN DEFAULT FALSE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for shop queries
+CREATE INDEX idx_shops_vendor ON shops (vendor_id);
+CREATE INDEX idx_shops_city ON shops (city_id);
+CREATE INDEX idx_shops_location ON shops USING GIST (location);
+```
+
+#### **E. Offers Module (Unified Table)**
 
 ```sql
 CREATE TABLE offers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     vendor_id UUID NOT NULL REFERENCES vendor_profiles(user_id) ON DELETE CASCADE,
     
-    -- Denormalized City ID: Crucial for fast Feed queries without joining Vendor table
+    -- Shop this offer belongs to (for map location)
+    shop_id UUID REFERENCES shops(id) ON DELETE SET NULL,
+    
+    -- Denormalized City ID: Inherits from shop, used for fast Feed queries
     city_id INT NOT NULL REFERENCES cities(id),
     
     -- CONTENT
@@ -205,9 +249,12 @@ CREATE TABLE offers (
 -- COMPOSITE INDEX: The most important index for the Feed
 -- "Show me Active offers in Gulshan (ID 5) sorted by Newest"
 CREATE INDEX idx_feed_query ON offers (city_id, status, valid_until, created_at DESC);
+
+-- Index for shop-based queries
+CREATE INDEX idx_offers_shop ON offers (shop_id);
 ```
 
-#### **E. Engagement & Redemptions**
+#### **F. Engagement & Redemptions**
 
 ```sql
 -- Tracks who Copied a Code or Claimed a Voucher

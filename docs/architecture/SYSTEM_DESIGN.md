@@ -151,37 +151,60 @@ CREATE TABLE offer_redemptions (
 );
 ```
 
-#### **D. Multi-Branch Offer Creation**
+#### **D. Multi-Shop Architecture**
 
-**Offer Creation Logic:** Offerify supports **Multi-Branch Brands** where a vendor can create offers for different zones (cities).
+Offerify supports **Multi-Shop Vendors** where a single vendor (brand) can have multiple physical outlets (shops). Each offer is linked to a specific shop, enabling precise location-based display on maps.
 
-- **Default Behavior:** If no `cityId` is provided when creating an offer, the system defaults to the vendor's **Operating Zone** (`vendor_profiles.city_id`).
-- **Override (Multi-Branch Support):** If a specific `cityId` is provided in the request payload, the offer will be created for that zone instead.
+```sql
+-- Shops Table (Physical Outlets)
+CREATE TABLE shops (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_id UUID NOT NULL REFERENCES vendor_profiles(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL, -- e.g., "Bata Gulshan"
+    city_id INT NOT NULL REFERENCES cities(id),
+    location GEOGRAPHY(POINT, 4326), -- Shop's exact coordinates
+    address TEXT,
+    contact_number VARCHAR(50),
+    is_default BOOLEAN DEFAULT FALSE, -- First shop is default
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_shops_vendor ON shops(vendor_id);
+CREATE INDEX idx_shops_location ON shops USING GIST (location);
+
+-- Offers now link to shops
+ALTER TABLE offers ADD COLUMN shop_id UUID REFERENCES shops(id);
+CREATE INDEX idx_offers_shop ON offers(shop_id);
+```
+
+**Entity Relationships:**
+```
+VendorProfile (1) ─────< (N) Shop (1) ─────< (N) Offer
+                             │
+                             └────> City (location zone)
+```
+
+**Offer Creation Logic:**
+- **With `shopId`:** Offer is created for that specific shop. City inherits from shop.
+- **Without `shopId`:** Falls back to vendor's **default shop** (marked `is_default: true`).
 - **Logic Implementation:**
   ```typescript
-  const targetCityId = createOfferDto.cityId || vendor.cityId;
+  const shop = dto.shopId 
+    ? await this.shopRepository.findOne({ where: { id: dto.shopId, vendor: { id: vendor.id } } })
+    : await this.shopRepository.findOne({ where: { vendor: { id: vendor.id }, isDefault: true } });
+  const targetCityId = shop?.cityId || vendor.cityId;
   ```
 
-**Use Case Example:**
-- Vendor "Burger King" has an operating zone in Gulshan (city_id: 1).
-- They want to post a special offer for their Dhanmondi branch (city_id: 99).
-- Request includes `cityId: 99` → Offer is created for Dhanmondi.
-- Request without `cityId` → Offer is created for Gulshan (default operating zone).
+**Use Case Example (Bata with Multiple Shops):**
+- Vendor "Bata Bangladesh" has 2 shops:
+  - Shop 1: "Bata Gulshan" (city_id: 1, is_default: true)
+  - Shop 2: "Bata Mirpur" (city_id: 5)
+- Creating offer with `shopId: shop2.id` → Offer appears on map at Mirpur location.
+- Creating offer without `shopId` → Offer defaults to Gulshan shop location.
 
-**Response Format:**
-The API response includes the populated `city` object to verify which zone the offer was posted to:
-```json
-{
-  "id": "offer-uuid",
-  "title": "50% Off Whopper",
-  "vendorId": "vendor-uuid",
-  "cityId": 99,
-  "city": {
-    "id": 99,
-    "name": "Dhanmondi"
-  }
-}
-```
+**Map Visualization Result:**
+Offers from the same vendor but different shops appear at **different coordinates** on the map.
 
 -----
 

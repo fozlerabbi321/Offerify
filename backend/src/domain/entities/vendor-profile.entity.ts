@@ -17,6 +17,7 @@ import { User } from './user.entity';
 import { City } from './city.entity';
 import { Offer } from './offer.entity';
 import { Review } from './review.entity';
+import { Shop } from './shop.entity';
 
 @Entity('vendor_profiles')
 export class VendorProfile {
@@ -74,6 +75,9 @@ export class VendorProfile {
 
     @OneToMany(() => Offer, (offer) => offer.vendor)
     offers: Offer[];
+
+    @OneToMany(() => Shop, (shop) => shop.vendor)
+    shops: Shop[];
 
     @OneToMany(() => Review, (review) => review.vendor)
     reviews: Review[];

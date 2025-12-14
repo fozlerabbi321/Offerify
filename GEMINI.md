@@ -35,7 +35,8 @@ Offerify is a **hyper-local** deal discovery platform built on a **Global CSC (C
 
 The system relies on `Country > State > City (Zone)`.
 
-  * **Constraint:** All Offers/Vendors **MUST** link to a `city_id`.
+  * **Constraint:** All Offers **MUST** link to a `shop_id` (which has a `city_id`).
+  * **Multi-Shop Support:** A Vendor can have multiple Shops. Each Shop has its own location/zone.
   * **Logic:** Auto-detection uses PostGIS `ST_DWithin`. **Never** mock this logic poorly; test it with real geometry data in integration tests.
 
 ### 3\. Database Integrity & Unified Tables 💾
@@ -43,6 +44,7 @@ The system relies on `Country > State > City (Zone)`.
   * **Single Table Inheritance:** Offers, Coupons, and Vouchers live in the `offers` table.
   * **Differentiation:** Use the `type` Enum (`discount`, `coupon`, `voucher`).
   * **UUIDs:** Use `uuid` for logic entities, `int` for static Location data.
+  * **Shop-Offer Relationship:** Each offer links to a specific shop via `shop_id`.
 
 ### 4\. Strict API Standards 📡
 

@@ -24,6 +24,7 @@ export default function VendorLayout() {
                     <Stack.Screen name="onboarding" options={{ title: 'Become a Seller' }} />
                     <Stack.Screen name="post" options={{ title: 'Create Offer' }} />
                     <Stack.Screen name="scan" options={{ title: 'Scan QR' }} />
+                    <Stack.Screen name="shops" options={{ title: 'Manage Shops' }} />
                 </Stack>
             </Box>
         </Box>

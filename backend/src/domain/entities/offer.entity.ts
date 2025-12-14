@@ -16,6 +16,7 @@ import { VendorProfile } from './vendor-profile.entity';
 import { City } from './city.entity';
 import { Favorite } from './favorite.entity';
 import { Category } from './category.entity';
+import { Shop } from './shop.entity';
 
 export enum OfferType {
     DISCOUNT = 'discount',
@@ -60,6 +61,13 @@ export class Offer {
 
     @RelationId((offer: Offer) => offer.vendor)
     vendorId: string;
+
+    @ManyToOne(() => Shop, (shop) => shop.offers, { nullable: true })
+    @JoinColumn({ name: 'shop_id' })
+    shop: Shop;
+
+    @RelationId((offer: Offer) => offer.shop)
+    shopId: string;
 
     @ManyToOne(() => City)
     @JoinColumn({ name: 'city_id' })
