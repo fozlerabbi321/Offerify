@@ -1,11 +1,17 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, DimensionValue } from 'react-native';
 import { useRouter } from 'expo-router';
 import Box from '../ui/Box';
 import Text from '../ui/Text';
 import { Image } from 'expo-image';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
+import { Ionicons } from '@expo/vector-icons';
+
+interface Vendor {
+    id: string;
+    businessName: string;
+}
 
 interface Offer {
     id: string;
@@ -14,11 +20,14 @@ interface Offer {
     image?: string;
     discountPercentage?: number;
     type: 'discount' | 'coupon' | 'voucher';
+    vendor?: Vendor;
 }
 
-const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: number | string }) => {
+const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: DimensionValue }) => {
     const theme = useTheme<Theme>();
     const router = useRouter();
+
+    const vendorName = offer.vendor?.businessName || 'Unknown Vendor';
 
     return (
         <TouchableOpacity
@@ -28,17 +37,18 @@ const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: number | s
         >
             <Box
                 width="100%"
-                height={240}
+                height={220}
                 backgroundColor="white"
                 borderRadius={16}
                 overflow="hidden"
                 shadowColor="black"
                 shadowOffset={{ width: 0, height: 2 }}
-                shadowOpacity={0.05}
-                shadowRadius={4}
-                elevation={2}
+                shadowOpacity={0.08}
+                shadowRadius={8}
+                elevation={3}
             >
-                <Box height={140} backgroundColor="gray" position="relative">
+                {/* Image Section */}
+                <Box height={130} backgroundColor="gray" position="relative">
                     {offer.image && (
                         <Image
                             source={{ uri: offer.image }}
@@ -46,27 +56,42 @@ const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: number | s
                             contentFit="cover"
                         />
                     )}
+                    {/* Smaller OFF Badge */}
                     {offer.discountPercentage && (
                         <Box
                             position="absolute"
-                            top={10}
-                            left={10}
+                            top={8}
+                            left={8}
                             backgroundColor="secondary"
                             paddingHorizontal="s"
                             paddingVertical="xs"
-                            borderRadius={8}
+                            borderRadius={6}
+                            flexDirection="row"
+                            alignItems="center"
                         >
-                            <Text variant="body" fontSize={12} fontWeight="bold" color="white">
+                            <Text variant="caption" fontSize={10} fontWeight="bold" color="white">
                                 {offer.discountPercentage}% OFF
                             </Text>
                         </Box>
                     )}
                 </Box>
-                <Box padding="m">
-                    <Text variant="subheader" fontSize={16} numberOfLines={1}>{offer.title}</Text>
-                    <Text variant="body" fontSize={12} color="darkGray" numberOfLines={2} marginTop="xs">
-                        {offer.description}
-                    </Text>
+                {/* Content Section */}
+                <Box padding="s" flex={1} justifyContent="space-between">
+                    <Box>
+                        <Text variant="body" fontSize={14} fontWeight="600" numberOfLines={1}>
+                            {offer.title}
+                        </Text>
+                        <Text variant="caption" fontSize={11} color="darkGray" numberOfLines={1} marginTop="xs">
+                            {offer.description}
+                        </Text>
+                    </Box>
+                    {/* Vendor Name Row */}
+                    <Box flexDirection="row" alignItems="center" marginTop="xs">
+                        <Ionicons name="storefront-outline" size={12} color={theme.colors.grayMedium} />
+                        <Text variant="caption" fontSize={11} color="grayMedium" marginLeft="xs" numberOfLines={1}>
+                            {vendorName}
+                        </Text>
+                    </Box>
                 </Box>
             </Box>
         </TouchableOpacity>

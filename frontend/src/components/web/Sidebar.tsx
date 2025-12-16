@@ -6,6 +6,7 @@ import { TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
+import Logo from '../ui/Logo';
 import { useAuthStore } from '../../store/auth.store';
 
 const SidebarItem = ({ href, icon, label, isActive }: { href: string, icon: any, label: string, isActive: boolean }) => {
@@ -81,6 +82,7 @@ const VendorButton = () => {
 
 const Sidebar = () => {
     const pathname = usePathname();
+    const theme = useTheme<Theme>();
 
     return (
         <Box
@@ -91,9 +93,12 @@ const Sidebar = () => {
             borderRightColor="gray"
         >
             <ScrollView contentContainerStyle={{ padding: 12 }}>
-                {/* Logo */}
+                {/* Brand Icon */}
                 <Box marginBottom="l" paddingHorizontal="m" paddingTop="s">
-                    <Text variant="header" fontSize={24} color="primary">Offerify</Text>
+                    <Box flexDirection="row" alignItems="center">
+                        <Logo variant="icon" size="m" />
+                        <Text variant="header" fontSize={24} marginLeft="s" style={{ color: '#4A148C' }}>Offerify</Text>
+                    </Box>
                 </Box>
 
                 {/* Main Navigation */}

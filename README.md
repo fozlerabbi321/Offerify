@@ -1,7 +1,5 @@
 # 🎯 Offerify
 
-> **Hyper-local deal discovery platform** built on a Global CSC (Country > State > City) model.
-
 [![NestJS](https://img.shields.io/badge/NestJS-11-red?logo=nestjs)](https://nestjs.com/)
 [![Expo](https://img.shields.io/badge/Expo-SDK_53-blue?logo=expo)](https://expo.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-PostGIS-blue?logo=postgresql)](https://www.postgresql.org/)

@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/auth.store';
 import LoginRequiredModal from '../auth/LoginRequiredModal';
+import Logo from '../ui/Logo';
 
 interface MobileHeaderProps {
     title?: string;
@@ -45,21 +46,11 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
             shadowRadius={4}
             elevation={2}
             zIndex={100}
-            safeAreaTop
         >
             {variant === 'home' ? (
                 <>
                     {/* App Icon / Letter */}
-                    <Box
-                        width={32}
-                        height={32}
-                        borderRadius={16}
-                        backgroundColor="primary"
-                        justifyContent="center"
-                        alignItems="center"
-                    >
-                        <Text variant="body" color="textInverted" fontWeight="bold" fontSize={18}>O</Text>
-                    </Box>
+                    <Logo variant="icon" size="m" />
 
                     {/* Location Selector */}
                     <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
