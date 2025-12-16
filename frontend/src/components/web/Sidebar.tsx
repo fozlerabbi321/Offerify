@@ -81,6 +81,7 @@ const VendorButton = () => {
 
 const Sidebar = () => {
     const pathname = usePathname();
+    const theme = useTheme<Theme>();
 
     return (
         <Box
@@ -91,9 +92,18 @@ const Sidebar = () => {
             borderRightColor="gray"
         >
             <ScrollView contentContainerStyle={{ padding: 12 }}>
-                {/* Logo */}
+                {/* Brand Icon (Logo removed per design) */}
                 <Box marginBottom="l" paddingHorizontal="m" paddingTop="s">
-                    <Text variant="header" fontSize={24} color="primary">Offerify</Text>
+                    <Box
+                        width={40}
+                        height={40}
+                        borderRadius={12}
+                        backgroundColor="primary"
+                        justifyContent="center"
+                        alignItems="center"
+                    >
+                        <Text variant="body" color="textInverted" fontWeight="bold" fontSize={20}>O</Text>
+                    </Box>
                 </Box>
 
                 {/* Main Navigation */}

@@ -84,12 +84,6 @@ export default function HomeScreen() {
         }
     });
 
-    const renderItem = ({ item }: { item: any }) => (
-        <Box marginHorizontal="m" marginBottom="m">
-            <OfferCard offer={item} />
-        </Box>
-    );
-
     return (
         <Container>
             <FlatList
@@ -117,4 +111,3 @@ export default function HomeScreen() {
         </Container>
     );
 }
-

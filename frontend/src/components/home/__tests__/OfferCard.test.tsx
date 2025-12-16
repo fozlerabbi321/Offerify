@@ -11,6 +11,10 @@ const mockOffer = {
     image: 'https://example.com/image.jpg',
     discountPercentage: 20,
     type: 'discount' as const,
+    vendor: {
+        id: 'vendor-1',
+        businessName: 'Test Vendor',
+    },
 };
 
 describe('OfferCard', () => {
@@ -36,4 +40,26 @@ describe('OfferCard', () => {
 
         expect(queryByText('% OFF')).toBeNull();
     });
+
+    it('renders vendor name when vendor data is available', () => {
+        const { getByText } = render(
+            <ThemeProvider theme={theme}>
+                <OfferCard offer={mockOffer} />
+            </ThemeProvider>
+        );
+
+        expect(getByText('Test Vendor')).toBeTruthy();
+    });
+
+    it('renders fallback text when vendor name is not available', () => {
+        const offerWithoutVendor = { ...mockOffer, vendor: undefined };
+        const { getByText } = render(
+            <ThemeProvider theme={theme}>
+                <OfferCard offer={offerWithoutVendor} />
+            </ThemeProvider>
+        );
+
+        expect(getByText('Unknown Vendor')).toBeTruthy();
+    });
 });
+

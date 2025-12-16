@@ -10,8 +10,10 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
+import Logo from '../ui/Logo';
 
 const Navbar = () => {
+
     const theme = useTheme<Theme>();
     const { cityName } = useLocationStore();
     const { user, isAuthenticated } = useAuthStore();
@@ -32,12 +34,38 @@ const Navbar = () => {
             paddingHorizontal="l"
             borderBottomWidth={1}
             borderBottomColor="gray"
+            position="relative"
         >
-            <Box flexDirection="row" alignItems="center">
-                <Text variant="header" fontSize={24} color="primary" marginRight="xl">Offerify</Text>
-            </Box>
+            {/* Left Section - Logo */}
+            <TouchableOpacity onPress={() => router.push('/')}>
+                <Logo variant="full" size="m" />
+            </TouchableOpacity>
+            {/* Search Box - Centered */}
+            <TouchableOpacity
+                onPress={() => router.push('/(tabs)/search')}
+                style={{ width: '100%', maxWidth: 500 }}
+            >
+                <Box
+                    height={40}
+                    backgroundColor="offWhite"
+                    borderRadius={8}
+                    flexDirection="row"
+                    alignItems="center"
+                    paddingHorizontal="m"
+                    borderWidth={1}
+                    borderColor="gray"
+                >
+                    <Ionicons name="search" size={18} color={theme.colors.grayMedium} />
+                    <Text color="grayMedium" marginLeft="s" fontSize={14}>Search offers...</Text>
+                </Box>
+            </TouchableOpacity>
 
-            <Box flexDirection="row" alignItems="center" gap="m">
+            {/* Right Section - Location & User */}
+            <Box
+                flexDirection="row"
+                alignItems="center"
+                gap="m"
+            >
                 <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
                     <Box padding="s" backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center">
                         <Ionicons name="map" size={16} color={theme.colors.primary} />
@@ -50,13 +78,6 @@ const Navbar = () => {
                     visible={isLocationModalVisible}
                     onClose={() => setLocationModalVisible(false)}
                 />
-
-                <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                    <Box width={200} height={40} backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center" paddingHorizontal="m">
-                        <Ionicons name="search" size={16} color={theme.colors.darkGray} />
-                        <Text color="darkGray" marginLeft="s">Search offers...</Text>
-                    </Box>
-                </TouchableOpacity>
 
                 {/* Auth Section */}
                 {isAuthenticated && user ? (
