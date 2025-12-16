@@ -1,14 +1,18 @@
 # Multi-stage Production Dockerfile for NestJS Backend
+# NOTE: This Dockerfile is designed to be run from the repo root with:
+#       docker build -f backend/Dockerfile .
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Install ALL dependencies (dev deps needed for build)
-COPY package*.json ./
+# Copy from backend folder since context is repo root
+COPY backend/package*.json ./
 RUN npm install && npm cache clean --force
 
-# Copy source code
-COPY . .
+# Copy source code from backend folder
+COPY backend/ .
 
 # Build the application
 RUN npm run build
