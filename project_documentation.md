@@ -411,7 +411,10 @@ Implement the Offer Details page reviews section:
 | Resource | URL |
 |----------|-----|
 | **Website** | *https://offerify.vercel.app* |
-| **Admin Panel** | *https://offerify.vercel.app/admin* |
-| **API Documentation** | *https://offerify-production.up.railway.app/offerify-api-docs* |
+| **Admin Panel** | *https://offerify.vercel.app/admin*|
+| **Custom Test Credentials** | *username: user@offerify.com password: 123456* |
+| **Vendor Test Credentials** | *username: vendor@offerify.com password: 123456* |
+| **Admin Panel Credentials** | *username: admin@offerify.com password: 123456* |
+| **Backend API Documentation** | *https://offerify-production.up.railway.app/offerify-api-docs* |
 
 ---
