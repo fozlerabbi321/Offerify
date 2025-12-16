@@ -245,7 +245,7 @@ function VendorDashboardContent() {
                             <Text marginTop="s" fontWeight="bold">Scan QR</Text>
                         </Box>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push('/vendor/post')} style={{ width: '48%', marginTop: 12 }}>
+                    <TouchableOpacity onPress={() => router.push('/vendor/profile')} style={{ width: '48%', marginTop: 12 }}>
                         <Box
                             backgroundColor="cardBackground"
                             padding="m"
@@ -253,8 +253,8 @@ function VendorDashboardContent() {
                             alignItems="center"
                             style={styles.shadow}
                         >
-                            <Ionicons name="create-outline" size={32} color={theme.colors.primary} />
-                            <Text marginTop="s" fontWeight="bold">Create Offer</Text>
+                            <Ionicons name="person-outline" size={32} color={theme.colors.primary} />
+                            <Text marginTop="s" fontWeight="bold">Vendor Profile</Text>
                         </Box>
                     </TouchableOpacity>
                 </Box>

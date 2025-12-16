@@ -1,87 +1,43 @@
 import React from 'react';
 import Box from './Box';
-import Text from './Text';
-import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../theme/theme';
-import { Platform } from 'react-native';
+import Text from './Text'; // Added missing import
+import { Image, ImageStyle, StyleProp } from 'react-native';
+
+const LogoFull = require('../../../assets/images/logo-full.png');
+const LogoIcon = require('../../../assets/images/logo-icon.png');
 
 interface LogoProps {
-    variant?: 'full' | 'icon' | 'text';
+    variant?: 'full' | 'icon';
     size?: 's' | 'm' | 'l';
-    color?: keyof Theme['colors'];
-    inverted?: boolean;
+    width?: number;
+    height?: number;
 }
 
-const Logo = ({ variant = 'full', size = 'm', color, inverted = false }: LogoProps) => {
-    const theme = useTheme<Theme>();
+const Logo = ({ variant = 'full', size = 'm', width, height }: LogoProps) => {
 
     // Size mappings
-    const iconSizes = {
-        s: 24,
-        m: 32,
-        l: 48,
+    const sizes = {
+        s: { height: 24, width: variant === 'full' ? 100 : 24 }, // Aspect ratios approx
+        m: { height: 40, width: variant === 'full' ? 160 : 40 },
+        l: { height: 60, width: variant === 'full' ? 200 : 60 },
     };
 
-    const textSizes = {
-        s: 16,
-        m: 20,
-        l: 28,
-    };
-
-    const spacing = {
-        s: 's',
-        m: 's',
-        l: 'm',
-    } as const;
-
-    const iconSize = iconSizes[size];
-    const textSize = textSizes[size];
-    const gap = spacing[size];
-
-    const textColor = color ? color : (inverted ? 'textInverted' : 'primary');
-    const iconBgColor = inverted ? 'white' : 'primary';
-    const iconTextColor = inverted ? 'primary' : 'textInverted';
+    const dimensions = sizes[size];
+    const finalWidth = width ?? dimensions.width;
+    const finalHeight = height ?? dimensions.height;
+    const source = variant === 'full' ? LogoFull : LogoIcon;
 
     return (
-        <Box flexDirection="row" alignItems="center">
-            {(variant === 'full' || variant === 'icon') && (
-                <Box
-                    width={iconSize}
-                    height={iconSize}
-                    borderRadius={iconSize / 2}
-                    backgroundColor={inverted ? 'offWhite' : 'primary'}
-                    justifyContent="center"
-                    alignItems="center"
-                    marginRight={variant === 'full' ? gap : undefined}
-                >
-                    <Text
-                        color={inverted ? 'primary' : 'textInverted'}
-                        fontWeight="bold"
-                        fontSize={textSize}
-                        style={{
-                            fontFamily: Platform.OS === 'web' ? 'System' : undefined, // Fallback
-                            includeFontPadding: false,
-                            lineHeight: textSize + 2, // Slight adjustment for vertical alignment
-                        }}
-                    >
-                        O
-                    </Text>
-                </Box>
-            )}
-
-            {(variant === 'full' || variant === 'text') && (
-                <Text
-                    variant="header"
-                    color={textColor}
-                    fontSize={textSize}
-                    fontWeight="bold"
-                    style={{
-                        letterSpacing: -0.5,
-                    }}
-                >
-                    Offerify
-                </Text>
-            )}
+        <Box justifyContent="center" alignItems="center">
+            <Image
+                source={source}
+                style={{
+                    height: finalHeight,
+                    width: finalWidth,
+                    borderRadius: variant === 'icon' ? 8 : 0, // Soft clip for icon
+                } as StyleProp<ImageStyle>}
+                resizeMode="contain"
+            />
         </Box>
     );
 };

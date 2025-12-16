@@ -45,7 +45,6 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
             shadowOpacity={0.05}
             shadowRadius={4}
             elevation={2}
-            elevation={2}
             zIndex={100}
         >
             {variant === 'home' ? (

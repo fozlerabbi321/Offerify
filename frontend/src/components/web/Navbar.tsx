@@ -1,7 +1,7 @@
 import React from 'react';
 import Box from '../ui/Box';
 import Text from '../ui/Text';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import { useLocationStore } from '../../store/location.store';
 import { useAuthStore } from '../../store/auth.store';
@@ -10,7 +10,6 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
-import Logo from '../ui/Logo';
 
 const Navbar = () => {
 
@@ -30,16 +29,12 @@ const Navbar = () => {
             backgroundColor="white"
             flexDirection="row"
             alignItems="center"
-            justifyContent="space-between"
+            justifyContent="center"
             paddingHorizontal="l"
             borderBottomWidth={1}
             borderBottomColor="gray"
             position="relative"
         >
-            {/* Left Section - Logo */}
-            <TouchableOpacity onPress={() => router.push('/')}>
-                <Logo variant="full" size="m" />
-            </TouchableOpacity>
             {/* Search Box - Centered */}
             <TouchableOpacity
                 onPress={() => router.push('/(tabs)/search')}
@@ -65,6 +60,8 @@ const Navbar = () => {
                 flexDirection="row"
                 alignItems="center"
                 gap="m"
+                position="absolute"
+                right={24}
             >
                 <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
                     <Box padding="s" backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center">
