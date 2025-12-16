@@ -2,7 +2,7 @@ import axios from 'axios';
 import storage from './storage';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api', // Use 10.0.2.2 for Android Emulator
+    baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
 });
 
 api.interceptors.request.use((config) => {

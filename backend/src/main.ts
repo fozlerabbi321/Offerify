@@ -15,7 +15,11 @@ async function bootstrap() {
 
   // Enable CORS with explicit methods
   app.enableCors({
-    origin: ['http://localhost:8081', 'http://localhost:3000'], // Frontend origins
+    origin: [
+      'http://localhost:8081',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL, // Production Vercel URL
+    ].filter(Boolean) as string[],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
