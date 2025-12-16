@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install only production dependencies in final image
+# Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
 # Create non-root user
