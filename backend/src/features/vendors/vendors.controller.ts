@@ -1,5 +1,5 @@
 
-import { Controller, Post, Body, UseGuards, Req, Get, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, Patch, Param, Query } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -48,6 +48,13 @@ export class VendorsController {
 @Controller('vendors')
 export class VendorsPublicController {
     constructor(private readonly vendorsService: VendorsService) { }
+
+    @Get()
+    @ApiOperation({ summary: 'List all vendors' })
+    @ApiResponse({ status: 200, description: 'Returns a list of vendors.' })
+    async list(@Query('cityId') cityId?: number) {
+        return this.vendorsService.findAll(cityId);
+    }
 
     @Get(':id')
     @ApiOperation({ summary: 'Get public vendor profile' })

@@ -36,10 +36,11 @@ export default function TabLayout() {
                     headerShown: !isDesktop, // Show header on mobile/tablet
                     header: (props) => {
                         const isHomeOrMap = route.name === 'index' || route.name === 'map';
+                        const isSearch = route.name === 'search';
                         return (
                             <MobileHeader
                                 title={props.options.title || route.name}
-                                variant={isHomeOrMap ? 'home' : 'standard'}
+                                variant={isHomeOrMap ? 'home' : isSearch ? 'search' : 'standard'}
                                 onBack={navigation.canGoBack() ? navigation.goBack : undefined}
                             />
                         );

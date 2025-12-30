@@ -36,11 +36,11 @@ const palette = {
 
 const generateNumericKeys = (limit: number) => {
     const keys: Record<string, number> = {};
-    for (let i = 0; i <= limit; i += 2) {
+    for (let i = -limit; i <= limit; i += 2) {
         keys[i.toString()] = i;
     }
     // Add some common odd numbers if needed
-    [1, 3, 5, 15, 25, 35].forEach(num => {
+    [-15, -5, -3, -1, 1, 3, 5, 15, 25, 35].forEach(num => {
         keys[num.toString()] = num;
     });
     return keys;

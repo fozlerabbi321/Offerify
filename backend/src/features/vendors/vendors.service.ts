@@ -170,4 +170,15 @@ export class VendorsService {
 
         return vendor;
     }
+
+    async findAll(cityId?: number): Promise<VendorProfile[]> {
+        const query = this.vendorRepo.createQueryBuilder('vendor')
+            .where('vendor.status = :status', { status: 'approved' });
+
+        if (cityId) {
+            query.andWhere('vendor.cityId = :cityId', { cityId });
+        }
+
+        return await query.getMany();
+    }
 }
