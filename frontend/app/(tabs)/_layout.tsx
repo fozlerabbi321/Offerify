@@ -45,7 +45,7 @@ export default function TabLayout() {
                         );
                     },
                     tabBarActiveTintColor: theme.colors.primary,
-                    tabBarInactiveTintColor: theme.colors.grayMedium,
+                    tabBarInactiveTintColor: theme.colors.black,
                     tabBarStyle: {
                         backgroundColor: theme.colors.mainBackground,
                         borderTopColor: theme.colors.gray,

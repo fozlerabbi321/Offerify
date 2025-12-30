@@ -54,22 +54,33 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
                         <Logo variant="icon" size="m" />
                     </Box>
 
-                    {/* Location Selector - Centered */}
-                    <Box flex={1} alignItems="center">
-                        <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
+                    {/* Location Selector - Centered / Wide (Matches Screenshot) */}
+                    <Box flex={1} alignItems="center" marginHorizontal="xs">
+                        <TouchableOpacity onPress={() => setLocationModalVisible(true)} style={{ width: '100%' }}>
                             <Box
                                 flexDirection="row"
                                 alignItems="center"
-                                backgroundColor="accent2"
+                                justifyContent="center"
+                                backgroundColor="white"
                                 paddingHorizontal="m"
                                 paddingVertical="s"
                                 borderRadius="l"
+                                width="100%"
+                                borderWidth={1}
+                                borderColor="gray"
                             >
                                 <Ionicons name="location" size={16} color={theme.colors.primary} />
-                                <Text variant="body" fontSize={13} marginLeft="xs" fontWeight="700" color="primary">
+                                <Text
+                                    variant="body"
+                                    fontSize={14}
+                                    marginLeft="xs"
+                                    fontWeight="600"
+                                    color="text"
+                                    numberOfLines={1}
+                                >
                                     {cityName}
                                 </Text>
-                                <Ionicons name="chevron-down" size={14} color={theme.colors.primary} style={{ marginLeft: 4 }} />
+                                <Ionicons name="chevron-down" size={14} color={theme.colors.grayMedium} style={{ marginLeft: 4 }} />
                             </Box>
                         </TouchableOpacity>
                     </Box>
