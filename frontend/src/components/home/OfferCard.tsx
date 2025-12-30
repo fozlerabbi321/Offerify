@@ -37,18 +37,20 @@ const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: DimensionV
         >
             <Box
                 width="100%"
-                height={220}
-                backgroundColor="white"
-                borderRadius={16}
+                height={230}
+                backgroundColor="cardBackground"
+                borderRadius="l"
                 overflow="hidden"
-                shadowColor="black"
-                shadowOffset={{ width: 0, height: 2 }}
-                shadowOpacity={0.08}
-                shadowRadius={8}
-                elevation={3}
+                style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 15,
+                    elevation: 5,
+                }}
             >
                 {/* Image Section */}
-                <Box height={130} backgroundColor="gray" position="relative">
+                <Box height={140} backgroundColor="gray" position="relative">
                     {offer.image && (
                         <Image
                             source={{ uri: offer.image }}
@@ -56,39 +58,65 @@ const OfferCard = ({ offer, width = '100%' }: { offer: Offer, width?: DimensionV
                             contentFit="cover"
                         />
                     )}
-                    {/* Smaller OFF Badge */}
+
+                    {/* Glassmorphism Badge */}
                     {offer.discountPercentage && (
                         <Box
                             position="absolute"
-                            top={8}
-                            left={8}
-                            backgroundColor="secondary"
-                            paddingHorizontal="s"
-                            paddingVertical="xs"
-                            borderRadius={6}
+                            top={12}
+                            left={12}
+                            backgroundColor="modalBackground"
+                            style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backdropFilter: 'blur(10px)' } as any}
                             flexDirection="row"
                             alignItems="center"
                         >
-                            <Text variant="caption" fontSize={10} fontWeight="bold" color="white">
+                            <Text variant="tiny" fontWeight="700" color="white">
                                 {offer.discountPercentage}% OFF
                             </Text>
                         </Box>
                     )}
+
+                    {/* Type Badge */}
+                    <Box
+                        position="absolute"
+                        bottom={12}
+                        right={12}
+                        backgroundColor="white"
+                        paddingHorizontal="s"
+                        paddingVertical="xxs"
+                        borderRadius="s"
+                    >
+                        <Text variant="tiny" fontWeight="700" color="primary" style={{ textTransform: 'uppercase' }}>
+                            {offer.type}
+                        </Text>
+                    </Box>
                 </Box>
+
                 {/* Content Section */}
                 <Box padding="s" flex={1} justifyContent="space-between">
                     <Box>
-                        <Text variant="body" fontSize={14} fontWeight="600" numberOfLines={1}>
+                        <Text variant="sectionTitle" fontSize={15} numberOfLines={1}>
                             {offer.title}
                         </Text>
-                        <Text variant="caption" fontSize={11} color="darkGray" numberOfLines={1} marginTop="xs">
+                        <Text variant="caption" numberOfLines={1} marginTop="xxs">
                             {offer.description}
                         </Text>
                     </Box>
+
                     {/* Vendor Name Row */}
-                    <Box flexDirection="row" alignItems="center" marginTop="xs">
-                        <Ionicons name="storefront-outline" size={12} color={theme.colors.grayMedium} />
-                        <Text variant="caption" fontSize={11} color="grayMedium" marginLeft="xs" numberOfLines={1}>
+                    <Box flexDirection="row" alignItems="center">
+                        <Box
+                            width={20}
+                            height={20}
+                            borderRadius="xs"
+                            backgroundColor="accent2"
+                            justifyContent="center"
+                            alignItems="center"
+                            marginRight="xs"
+                        >
+                            <Ionicons name="storefront" size={12} color={theme.colors.primary} />
+                        </Box>
+                        <Text variant="tiny" color="textMuted" numberOfLines={1}>
                             {vendorName}
                         </Text>
                     </Box>

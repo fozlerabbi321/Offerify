@@ -10,32 +10,40 @@ import Categories from '../../src/components/home/Categories';
 import OfferCard from '../../src/components/home/OfferCard';
 import { useLocationStore } from '../../src/store/location.store';
 import ResponsiveGrid from '../../src/components/ui/ResponsiveGrid';
+import HomeHero from '../../src/components/home/HomeHero';
+import { CategorySkeleton, OfferCardSkeleton } from '../../src/components/ui/SkeletonLoaders';
 
 const HeroSection = ({ offers }: { offers: any[] }) => {
     if (!offers || offers.length === 0) return null;
     return (
-        <Box height={200} backgroundColor="cardPrimaryBackground" margin="m" borderRadius={16} justifyContent="center" alignItems="center" overflow="hidden">
+        <Box height={200} backgroundColor="cardPrimaryBackground" margin="m" borderRadius="l" justifyContent="center" alignItems="center" overflow="hidden">
             {/* Placeholder for Carousel */}
             <Text variant="header" color="textInverted">{offers[0]?.title}</Text>
         </Box>
     )
 }
 
-const HorizontalSection = ({ title, offers }: { title: string, offers: any[] }) => {
-    if (!offers || offers.length === 0) return null;
+const HorizontalSection = ({ title, offers, loading }: { title: string, offers: any[], loading?: boolean }) => {
+    if (!loading && (!offers || offers.length === 0)) return null;
     return (
         <Box marginBottom="l">
-            <Text variant="subheader" marginLeft="m" marginBottom="s">{title}</Text>
+            <Box paddingHorizontal="m" marginBottom="s">
+                <Text variant="sectionTitle">{title}</Text>
+            </Box>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 16 }}>
-                {offers.map((offer) => (
-                    <Box key={offer.id} marginRight="m">
-                        <OfferCard offer={offer} width={200} />
-                    </Box>
-                ))}
+                {loading ? (
+                    [1, 2, 3].map((i) => <OfferCardSkeleton key={i} width={200} />)
+                ) : (
+                    offers.map((offer) => (
+                        <Box key={offer.id} marginRight="m">
+                            <OfferCard offer={offer} width={200} />
+                        </Box>
+                    ))
+                )}
             </ScrollView>
         </Box>
-    )
-}
+    );
+};
 
 export default function HomeScreen() {
     const { cityId, latitude, longitude } = useLocationStore();
@@ -74,15 +82,15 @@ export default function HomeScreen() {
         }
     });
 
-    const { data: smartFeed, refetch, isRefetching } = useQuery({
+    const { data: smartFeed, refetch, isRefetching, isLoading: isSmartFeedLoading } = useQuery({
         queryKey: ['offers', 'smart-feed', cityId],
         queryFn: async () => {
-            console.log('Fetching smart feed...');
             const res = await api.get('/offers', { params: { cityId } });
-            console.log('Smart feed data:', res.data);
             return res.data;
         }
     });
+
+    const isLoading = isRefetching || isSmartFeedLoading;
 
     return (
         <Container>
@@ -92,18 +100,44 @@ export default function HomeScreen() {
                 refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
                 ListHeaderComponent={
                     <>
-                        <HeroSection offers={featuredOffers} />
-                        <Categories categories={categories || []} />
-                        <HorizontalSection title="Near You" offers={nearOffers} />
-                        <HorizontalSection title="Trending" offers={trendingOffers} />
-                        <Text variant="subheader" marginLeft="m" marginTop="l" marginBottom="m">Smart Feed</Text>
+                        {isLoading ? (
+                            <Box padding="m">
+                                <OfferCardSkeleton width="100%" />
+                            </Box>
+                        ) : (
+                            <HomeHero offers={featuredOffers || []} />
+                        )}
+
+                        {isLoading ? (
+                            <Box flexDirection="row" paddingHorizontal="m" marginBottom="l">
+                                {[1, 2, 3, 4].map((i) => <CategorySkeleton key={i} />)}
+                            </Box>
+                        ) : (
+                            <Categories categories={categories || []} />
+                        )}
+
+                        <HorizontalSection title="Near You" offers={nearOffers || []} loading={isLoading} />
+                        <HorizontalSection title="Trending" offers={trendingOffers || []} loading={isLoading} />
+
+                        <Box paddingHorizontal="m" marginTop="l" marginBottom="m">
+                            <Text variant="sectionTitle">Smart Feed</Text>
+                        </Box>
                         <Box marginHorizontal="m">
-                            <ResponsiveGrid
-                                data={smartFeed || []}
-                                renderItem={(item) => <OfferCard offer={item} />}
-                                itemMinWidth={160}
-                                maxColumns={6}
-                            />
+                            {isLoading ? (
+                                <ResponsiveGrid
+                                    data={[1, 2, 3, 4, 5, 6]}
+                                    renderItem={() => <OfferCardSkeleton />}
+                                    itemMinWidth={160}
+                                    maxColumns={6}
+                                />
+                            ) : (
+                                <ResponsiveGrid
+                                    data={smartFeed || []}
+                                    renderItem={(item) => <OfferCard offer={item} />}
+                                    itemMinWidth={160}
+                                    maxColumns={6}
+                                />
+                            )}
                         </Box>
                     </>
                 }

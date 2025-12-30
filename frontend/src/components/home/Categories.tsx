@@ -12,43 +12,56 @@ interface Category {
     icon: string;
 }
 
+const CATEGORY_COLORS = ['accent1', 'accent2', 'accent3', 'accent4', 'accent5'] as const;
+
 const Categories = ({ categories }: { categories: Category[] }) => {
     const theme = useTheme<Theme>();
 
     return (
         <Box marginBottom="l">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+            <Box paddingHorizontal="m" marginBottom="s">
+                <Text variant="sectionTitle">Explore Categories</Text>
+            </Box>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+                decelerationRate="fast"
+            >
                 {categories.map((cat, index) => {
                     const isImageUrl = cat.icon?.startsWith('http');
+                    const bgColor = theme.colors[CATEGORY_COLORS[index % CATEGORY_COLORS.length]];
 
                     return (
-                        <TouchableOpacity key={cat.id || index} style={{ marginRight: 16, alignItems: 'center' }}>
+                        <TouchableOpacity key={cat.id || index} style={{ marginRight: 20, alignItems: 'center' }}>
                             <Box
-                                width={70}
-                                height={70}
-                                backgroundColor="white"
-                                borderRadius={20}
+                                width={75}
+                                height={75}
+                                backgroundColor="cardBackground"
+                                borderRadius="l"
                                 justifyContent="center"
                                 alignItems="center"
-                                shadowColor="black"
-                                shadowOffset={{ width: 0, height: 2 }}
-                                shadowOpacity={0.05}
-                                shadowRadius={4}
-                                elevation={2}
-                                marginBottom="s"
+                                style={{
+                                    backgroundColor: bgColor,
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.05,
+                                    shadowRadius: 10,
+                                    elevation: 2,
+                                }}
+                                marginBottom="xs"
                                 overflow="hidden"
                             >
                                 {isImageUrl ? (
                                     <Image
                                         source={{ uri: cat.icon }}
-                                        style={{ width: 70, height: 70 }}
-                                        resizeMode="cover"
+                                        style={{ width: '100%', height: '100%' }}
                                     />
                                 ) : (
-                                    <Ionicons name={cat.icon as any || 'grid'} size={28} color={theme.colors.primary} />
+                                    <Ionicons name={cat.icon as any || 'grid'} size={32} color={theme.colors.primary} />
                                 )}
                             </Box>
-                            <Text variant="body" fontSize={12} color="darkGray">{cat.name}</Text>
+                            <Text variant="tiny" fontWeight="700" color="darkGray">{cat.name}</Text>
                         </TouchableOpacity>
                     );
                 })}
