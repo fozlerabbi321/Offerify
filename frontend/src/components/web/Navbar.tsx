@@ -12,7 +12,6 @@ import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../theme/theme';
 
 const Navbar = () => {
-
     const theme = useTheme<Theme>();
     const { cityName } = useLocationStore();
     const { user, isAuthenticated } = useAuthStore();
@@ -25,85 +24,106 @@ const Navbar = () => {
 
     return (
         <Box
-            height={60}
+            height={70}
             backgroundColor="white"
             flexDirection="row"
             alignItems="center"
             justifyContent="center"
-            paddingHorizontal="l"
-            borderBottomWidth={1}
-            borderBottomColor="gray"
-            position="relative"
+            style={{
+                borderBottomWidth: 1,
+                borderBottomColor: theme.colors.gray200,
+                position: 'sticky',
+                top: 0,
+                zIndex: 1000,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+            } as any}
         >
-            {/* Search Box - Centered */}
-            <TouchableOpacity
-                onPress={() => router.push('/(tabs)/search')}
-                style={{ width: '100%', maxWidth: 500 }}
-            >
-                <Box
-                    height={40}
-                    backgroundColor="offWhite"
-                    borderRadius={8}
-                    flexDirection="row"
-                    alignItems="center"
-                    paddingHorizontal="m"
-                    borderWidth={1}
-                    borderColor="gray"
-                >
-                    <Ionicons name="search" size={18} color={theme.colors.grayMedium} />
-                    <Text color="grayMedium" marginLeft="s" fontSize={14}>Search offers...</Text>
-                </Box>
-            </TouchableOpacity>
-
-            {/* Right Section - Location & User */}
             <Box
+                width="100%"
+                maxWidth={1200}
                 flexDirection="row"
                 alignItems="center"
-                gap="m"
-                position="absolute"
-                right={24}
+                paddingHorizontal="l"
             >
-                <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
-                    <Box padding="s" backgroundColor="offWhite" borderRadius={8} flexDirection="row" alignItems="center">
-                        <Ionicons name="map" size={16} color={theme.colors.primary} />
-                        <Text marginLeft="s" fontWeight="600">{cityName}</Text>
-                        <Ionicons name="chevron-down" size={14} color={theme.colors.darkGray} style={{ marginLeft: 4 }} />
-                    </Box>
-                </TouchableOpacity>
-
-                <LocationPickerModal
-                    visible={isLocationModalVisible}
-                    onClose={() => setLocationModalVisible(false)}
-                />
-
-                {/* Auth Section */}
-                {isAuthenticated && user ? (
-                    <TouchableOpacity onPress={() => router.push('/(tabs)/account')}>
+                {/* Search Box - Centered/Main */}
+                <Box flex={1}>
+                    <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/search')}
+                        style={{ width: '100%', maxWidth: 600 }}
+                    >
                         <Box
-                            width={40}
-                            height={40}
-                            borderRadius={20}
-                            backgroundColor="primary"
+                            height={44}
+                            backgroundColor="offWhite"
+                            borderRadius="l"
+                            flexDirection="row"
                             alignItems="center"
-                            justifyContent="center"
+                            paddingHorizontal="m"
+                            borderWidth={1}
+                            borderColor="gray"
+                            style={{ transition: 'all 0.2s ease' } as any}
                         >
-                            <Text color="textInverted" fontWeight="bold" fontSize={16}>
-                                {getInitials(user.email)}
-                            </Text>
+                            <Ionicons name="search-outline" size={20} color={theme.colors.grayMedium} />
+                            <Text color="grayMedium" marginLeft="s" fontSize={15}>Search for amazing deals near you...</Text>
                         </Box>
                     </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                </Box>
+
+                {/* Right Section - Location & User */}
+                <Box
+                    flexDirection="row"
+                    alignItems="center"
+                    gap="m"
+                    marginLeft="l"
+                >
+                    <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
                         <Box
-                            paddingHorizontal="l"
+                            paddingHorizontal="m"
                             paddingVertical="s"
-                            backgroundColor="primary"
-                            borderRadius={8}
+                            backgroundColor="accent2"
+                            borderRadius="l"
+                            flexDirection="row"
+                            alignItems="center"
                         >
-                            <Text color="textInverted" fontWeight="600">Login</Text>
+                            <Ionicons name="location" size={16} color={theme.colors.primary} />
+                            <Text marginLeft="s" fontWeight="700" color="primary">{cityName}</Text>
+                            <Ionicons name="chevron-down" size={14} color={theme.colors.primary} style={{ marginLeft: 4 }} />
                         </Box>
                     </TouchableOpacity>
-                )}
+
+                    <LocationPickerModal
+                        visible={isLocationModalVisible}
+                        onClose={() => setLocationModalVisible(false)}
+                    />
+
+                    {/* Auth Section */}
+                    {isAuthenticated && user ? (
+                        <TouchableOpacity onPress={() => router.push('/(tabs)/account')}>
+                            <Box
+                                width={40}
+                                height={40}
+                                borderRadius="full"
+                                backgroundColor="primary"
+                                alignItems="center"
+                                justifyContent="center"
+                            >
+                                <Text color="textInverted" fontWeight="bold" fontSize={16}>
+                                    {getInitials(user.email)}
+                                </Text>
+                            </Box>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                            <Box
+                                paddingHorizontal="l"
+                                paddingVertical="s"
+                                backgroundColor="primary"
+                                borderRadius="l"
+                            >
+                                <Text color="textInverted" fontWeight="bold">Login</Text>
+                            </Box>
+                        </TouchableOpacity>
+                    )}
+                </Box>
             </Box>
         </Box>
     );

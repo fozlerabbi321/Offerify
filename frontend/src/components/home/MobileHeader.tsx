@@ -49,26 +49,39 @@ const MobileHeader = ({ title, variant = 'standard', onBack }: MobileHeaderProps
         >
             {variant === 'home' ? (
                 <>
-                    {/* App Icon / Letter */}
-                    <Logo variant="icon" size="m" />
+                    {/* App Icon / Letter - Left Side */}
+                    <Box width={40}>
+                        <Logo variant="icon" size="m" />
+                    </Box>
 
-                    {/* Location Selector */}
-                    <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
-                        <Box flexDirection="row" alignItems="center" backgroundColor="offWhite" paddingHorizontal="m" paddingVertical="s" borderRadius={20}>
-                            <Ionicons name="map" size={16} color={theme.colors.primary} />
-                            <Text variant="body" fontSize={14} marginLeft="s" fontWeight="600">{cityName}</Text>
-                            <Ionicons name="chevron-down" size={14} color={theme.colors.darkGray} style={{ marginLeft: 4 }} />
-                        </Box>
-                    </TouchableOpacity>
+                    {/* Location Selector - Centered */}
+                    <Box flex={1} alignItems="center">
+                        <TouchableOpacity onPress={() => setLocationModalVisible(true)}>
+                            <Box
+                                flexDirection="row"
+                                alignItems="center"
+                                backgroundColor="accent2"
+                                paddingHorizontal="m"
+                                paddingVertical="s"
+                                borderRadius="l"
+                            >
+                                <Ionicons name="location" size={16} color={theme.colors.primary} />
+                                <Text variant="body" fontSize={13} marginLeft="xs" fontWeight="700" color="primary">
+                                    {cityName}
+                                </Text>
+                                <Ionicons name="chevron-down" size={14} color={theme.colors.primary} style={{ marginLeft: 4 }} />
+                            </Box>
+                        </TouchableOpacity>
+                    </Box>
 
                     <LocationPickerModal
                         visible={isLocationModalVisible}
                         onClose={() => setLocationModalVisible(false)}
                     />
 
-                    {/* Search Icon */}
+                    {/* Search Icon - Right Side */}
                     <TouchableOpacity onPress={() => router.push('/search')}>
-                        <Box width={36} height={36} backgroundColor="offWhite" borderRadius={18} justifyContent="center" alignItems="center">
+                        <Box width={40} height={40} backgroundColor="offWhite" borderRadius={20} justifyContent="center" alignItems="center">
                             <Ionicons name="search" size={20} color={theme.colors.darkGray} />
                         </Box>
                     </TouchableOpacity>

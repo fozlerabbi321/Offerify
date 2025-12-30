@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, TextInput, TouchableOpacity } from 'react-native';
+import { TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import OfferCard from '../../src/components/home/OfferCard';
 import { useLocationStore } from '../../src/store/location.store';
 import { useAuthStore } from '../../src/store/auth.store';
 import ResponsiveGrid from '../../src/components/ui/ResponsiveGrid';
-import { ScrollView } from 'react-native';
+import { CategorySkeleton, OfferCardSkeleton } from '../../src/components/ui/SkeletonLoaders';
 
 const useDebounce = (value: string, delay: number) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -30,11 +30,12 @@ const useDebounce = (value: string, delay: number) => {
     return debouncedValue;
 };
 
-const fetchSearchResults = async (query: string, cityId: number | null) => {
-    if (!query) return [];
-    const response = await api.get('/offers', { params: { cityId, search: query } });
-    return response.data;
-};
+const OFFER_TYPES = [
+    { label: 'All', value: 'all' },
+    { label: 'Discounts', value: 'discount' },
+    { label: 'Coupons', value: 'coupon' },
+    { label: 'Vouchers', value: 'voucher' },
+];
 
 export default function SearchScreen() {
     const theme = useTheme<Theme>();
@@ -42,12 +43,28 @@ export default function SearchScreen() {
     const { cityId } = useLocationStore();
     const { user, isAuthenticated } = useAuthStore();
     const [searchQuery, setSearchQuery] = useState('');
-    const debouncedQuery = useDebounce(searchQuery, 500);
+    const [selectedType, setSelectedType] = useState('all');
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const debouncedQuery = useDebounce(searchQuery, 400);
+
+    const { data: categories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            const res = await api.get('/categories');
+            return res.data;
+        }
+    });
 
     const { data: results, isLoading } = useQuery({
-        queryKey: ['search', debouncedQuery, cityId],
-        queryFn: () => fetchSearchResults(debouncedQuery, cityId),
-        enabled: !!debouncedQuery,
+        queryKey: ['search', debouncedQuery, cityId, selectedType, selectedCategory],
+        queryFn: async () => {
+            const params: any = { cityId, search: debouncedQuery };
+            if (selectedType !== 'all') params.type = selectedType;
+            if (selectedCategory) params.categoryId = selectedCategory;
+            const response = await api.get('/offers', { params });
+            return response.data;
+        },
+        enabled: !!debouncedQuery || !!selectedCategory || selectedType !== 'all',
     });
 
     const getInitials = (email: string) => {
@@ -55,99 +72,164 @@ export default function SearchScreen() {
     };
 
     return (
-        <Box flex={1} backgroundColor="mainBackground">
+        <Box flex={1} backgroundColor="mainBackground" alignItems="center">
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
-            <Box flexDirection="row" alignItems="center" padding="m" paddingTop="l" borderBottomWidth={1} borderBottomColor="gray">
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-                </TouchableOpacity>
+            {/* Header Container - Max Width */}
+            <Box width="100%" maxWidth={1200} backgroundColor="cardBackground">
                 <Box
-                    flex={1}
-                    marginLeft="m"
                     flexDirection="row"
                     alignItems="center"
-                    backgroundColor="offWhite"
-                    borderRadius={12}
-                    paddingHorizontal="m"
-                    height={48}
-                    borderWidth={1}
-                    borderColor="gray"
+                    padding="m"
+                    paddingTop="l"
+                    borderBottomWidth={1}
+                    borderBottomColor="gray200"
                 >
-                    <Ionicons name="search" size={20} color={theme.colors.grayMedium} />
-                    <TextInput
-                        style={{ flex: 1, marginLeft: 8, color: theme.colors.text, height: '100%', outlineStyle: 'none' } as any}
-                        placeholder="Search offers..."
-                        placeholderTextColor={theme.colors.grayMedium}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        autoFocus
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color={theme.colors.grayMedium} />
-                        </TouchableOpacity>
-                    )}
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Box backgroundColor="offWhite" p="xs" borderRadius="s">
+                            <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+                        </Box>
+                    </TouchableOpacity>
+
+                    <Box
+                        flex={1}
+                        marginLeft="m"
+                        flexDirection="row"
+                        alignItems="center"
+                        backgroundColor="offWhite"
+                        borderRadius="l"
+                        paddingHorizontal="m"
+                        height={46}
+                        borderWidth={1}
+                        borderColor="gray"
+                    >
+                        <Ionicons name="search-outline" size={18} color={theme.colors.grayMedium} />
+                        <TextInput
+                            style={{ flex: 1, marginLeft: 8, color: theme.colors.text, fontSize: 15, fontWeight: '500', height: '100%', outlineStyle: 'none' } as any}
+                            placeholder="What are you looking for?"
+                            placeholderTextColor={theme.colors.grayMedium}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <Ionicons name="close-circle" size={20} color={theme.colors.grayMedium} />
+                            </TouchableOpacity>
+                        )}
+                    </Box>
+
+                    {/* Auth/Profile */}
+                    <Box marginLeft="m">
+                        {isAuthenticated && user ? (
+                            <TouchableOpacity onPress={() => router.push('/(tabs)/account')}>
+                                <Box width={38} height={38} borderRadius="full" backgroundColor="primary" alignItems="center" justifyContent="center">
+                                    <Text color="textInverted" fontWeight="bold" fontSize={15}>{getInitials(user.email)}</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                                <Box paddingHorizontal="m" paddingVertical="s" backgroundColor="primary" borderRadius="l">
+                                    <Text color="textInverted" fontWeight="bold" fontSize={13}>Login</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        )}
+                    </Box>
                 </Box>
 
-                {/* Login/Profile Avatar */}
-                {isAuthenticated && user ? (
-                    <TouchableOpacity onPress={() => router.push('/(tabs)/account')} style={{ marginLeft: 12 }}>
-                        <Box
-                            width={40}
-                            height={40}
-                            borderRadius={20}
-                            backgroundColor="primary"
-                            alignItems="center"
-                            justifyContent="center"
-                        >
-                            <Text color="textInverted" fontWeight="bold" fontSize={16}>
-                                {getInitials(user.email)}
-                            </Text>
-                        </Box>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={{ marginLeft: 12 }}>
-                        <Box
-                            paddingHorizontal="m"
-                            paddingVertical="s"
-                            backgroundColor="primary"
-                            borderRadius={8}
-                        >
-                            <Text color="textInverted" fontWeight="600" fontSize={14}>Login</Text>
-                        </Box>
-                    </TouchableOpacity>
-                )}
+                {/* Filter Bar */}
+                <Box borderBottomWidth={1} borderBottomColor="gray200">
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 12, gap: 10 }}>
+                        {/* Type Filters */}
+                        {OFFER_TYPES.map((type) => (
+                            <TouchableOpacity
+                                key={type.value}
+                                onPress={() => setSelectedType(type.value)}
+                            >
+                                <Box
+                                    paddingHorizontal="m"
+                                    paddingVertical="s"
+                                    borderRadius="l"
+                                    backgroundColor={selectedType === type.value ? 'primary' : 'offWhite'}
+                                    borderWidth={1}
+                                    borderColor={selectedType === type.value ? 'primary' : 'gray'}
+                                >
+                                    <Text
+                                        color={selectedType === type.value ? 'white' : 'textMuted'}
+                                        fontWeight="700"
+                                        fontSize={13}
+                                    >
+                                        {type.label}
+                                    </Text>
+                                </Box>
+                            </TouchableOpacity>
+                        ))}
+
+                        <Box width={1} height={20} backgroundColor="gray" marginHorizontal="xs" alignSelf="center" />
+
+                        {/* Category Filters */}
+                        {(categories || []).map((cat: any) => (
+                            <TouchableOpacity
+                                key={cat.id}
+                                onPress={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                            >
+                                <Box
+                                    paddingHorizontal="m"
+                                    paddingVertical="s"
+                                    borderRadius="l"
+                                    backgroundColor={selectedCategory === cat.id ? 'secondary' : 'offWhite'}
+                                    borderWidth={1}
+                                    borderColor={selectedCategory === cat.id ? 'secondary' : 'gray'}
+                                >
+                                    <Text
+                                        color={selectedCategory === cat.id ? 'white' : 'textMuted'}
+                                        fontWeight="700"
+                                        fontSize={13}
+                                    >
+                                        {cat.name}
+                                    </Text>
+                                </Box>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </Box>
             </Box>
 
-            {/* Results */}
-            {isLoading ? (
-                <Box flex={1} justifyContent="center" alignItems="center">
-                    <Text>Searching...</Text>
-                </Box>
-            ) : (
-                <ScrollView contentContainerStyle={{ padding: 16 }}>
-                    {(!results || results.length === 0) ? (
-                        debouncedQuery ? (
-                            <Box flex={1} justifyContent="center" alignItems="center" marginTop="xl">
-                                <Text color="gray">No results found.</Text>
+            {/* Results Area - Max Width */}
+            <Box width="100%" flex={1} maxWidth={1200}>
+                {isLoading ? (
+                    <ResponsiveGrid
+                        data={[1, 2, 3, 4, 5, 6]}
+                        renderItem={() => <OfferCardSkeleton width="100%" />}
+                        itemMinWidth={280}
+                        gap={16}
+                        style={{ padding: 16 }}
+                    />
+                ) : (
+                    <ScrollView contentContainerStyle={{ padding: 16 }}>
+                        {(!results || results.length === 0) ? (
+                            <Box flex={1} justifyContent="center" alignItems="center" marginTop="xxl" padding="xl">
+                                <Ionicons name="search-outline" size={64} color={theme.colors.gray} />
+                                <Text color="textMuted" variant="subheader" marginTop="m" textAlign="center">
+                                    {debouncedQuery || selectedCategory || selectedType !== 'all'
+                                        ? "We couldn't find any offers matching your search."
+                                        : "Search for amazing deals near you."}
+                                </Text>
+                                <Text color="grayMedium" textAlign="center" marginTop="s">
+                                    Try using different keywords or filters to find what you're looking for.
+                                </Text>
                             </Box>
                         ) : (
-                            <Box flex={1} justifyContent="center" alignItems="center" marginTop="xl">
-                                <Text color="gray">Type to search offers nearby.</Text>
-                            </Box>
-                        )
-                    ) : (
-                        <ResponsiveGrid
-                            data={results}
-                            renderItem={(item) => <OfferCard offer={item} />}
-                            itemMinWidth={300}
-                            gap={16}
-                        />
-                    )}
-                </ScrollView>
-            )}
+                            <ResponsiveGrid
+                                data={results}
+                                renderItem={(item) => <OfferCard offer={item} />}
+                                itemMinWidth={280}
+                                gap={16}
+                            />
+                        )}
+                    </ScrollView>
+                )}
+            </Box>
         </Box>
     );
 }
