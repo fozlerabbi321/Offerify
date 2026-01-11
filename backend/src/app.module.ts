@@ -16,6 +16,7 @@ import { MediaModule } from './features/media/media.module';
 import { CategoriesModule } from './features/categories/categories.module';
 import { AdminModule } from './features/admin/admin.module';
 import { ShopsModule } from './features/shops/shops.module';
+import { SearchModule } from './features/search/search.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -37,6 +38,7 @@ import { ConfigService } from '@nestjs/config';
     CategoriesModule,
     AdminModule,
     ShopsModule,
+    SearchModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

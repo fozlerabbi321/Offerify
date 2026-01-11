@@ -48,4 +48,9 @@ export class GetOffersDto {
     @IsOptional()
     @IsString()
     vendorId?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    search?: string;
 }

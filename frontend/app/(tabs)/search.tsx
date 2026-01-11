@@ -14,6 +14,8 @@ import { useAuthStore } from '../../src/store/auth.store';
 import ResponsiveGrid from '../../src/components/ui/ResponsiveGrid';
 import { CategorySkeleton, OfferCardSkeleton } from '../../src/components/ui/SkeletonLoaders';
 import SearchFilterModal from '../../src/components/home/SearchFilterModal';
+import SearchSuggestions from '../../src/components/home/SearchSuggestions';
+import { useSearchStore } from '../../src/store/search.store';
 
 const TRENDING_SEARCHES = ['Pizza', 'Coffee', 'Gym', 'Electronics', 'Dine-in'];
 
@@ -40,26 +42,50 @@ const OFFER_TYPES = [
     { label: 'Vouchers', value: 'voucher' },
 ];
 
-import { useSearchStore } from '../../src/store/search.store';
-
 export default function SearchScreen() {
     const theme = useTheme<Theme>();
     const router = useRouter();
     const { cityId } = useLocationStore();
     const { user, isAuthenticated } = useAuthStore();
-    const { query, setQuery } = useSearchStore();
+    const { query, setQuery, setSuggestions } = useSearchStore();
     const [selectedType, setSelectedType] = useState('all');
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
-    const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-    const [isFilterModalVisible, setFilterModalVisible] = useState(false);
-    const debouncedQuery = useDebounce(query, 400);
 
-    const handleSelectCity = (id: number | null) => {
-        if (id !== selectedCityId) {
-            setSelectedVendorId(null);
+    // Active filters (used for query)
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [activeCityId, setActiveCityId] = useState<number | null>(null);
+    const [activeVendorId, setActiveVendorId] = useState<string | null>(null);
+
+    // Pending filters (used in modal)
+    const [pendingCategory, setPendingCategory] = useState<string | null>(null);
+    const [pendingCityId, setPendingCityId] = useState<number | null>(null);
+    const [pendingVendorId, setPendingVendorId] = useState<string | null>(null);
+
+    const [isFilterModalVisible, setFilterModalVisible] = useState(false);
+    const debouncedQuery = useDebounce(query, 300);
+
+    const handleSelectCityPending = (id: number | null) => {
+        if (id !== pendingCityId) {
+            setPendingVendorId(null);
         }
-        setSelectedCityId(id);
+        setPendingCityId(id);
+    };
+
+    const handleApplyFilters = () => {
+        setActiveCategory(pendingCategory);
+        setActiveCityId(pendingCityId);
+        setActiveVendorId(pendingVendorId);
+        setFilterModalVisible(false);
+    };
+
+    const handleResetFilters = () => {
+        setPendingCategory(null);
+        setPendingCityId(null);
+        setPendingVendorId(null);
+        setActiveCategory(null);
+        setActiveCityId(null);
+        setActiveVendorId(null);
+        setSelectedType('all');
+        setFilterModalVisible(false);
     };
 
     const { data: categories } = useQuery({
@@ -79,27 +105,27 @@ export default function SearchScreen() {
     });
 
     const { data: vendors, isLoading: isVendorsLoading } = useQuery({
-        queryKey: ['vendors', selectedCityId],
+        queryKey: ['vendors', pendingCityId],
         queryFn: async () => {
             const params: any = {};
-            if (selectedCityId) params.cityId = selectedCityId;
+            if (pendingCityId) params.cityId = pendingCityId;
             const res = await api.get('/vendors', { params });
             return res.data;
         }
     });
 
     const { data: results, isLoading } = useQuery({
-        queryKey: ['search', debouncedQuery, cityId, selectedType, selectedCategory, selectedCityId, selectedVendorId],
+        queryKey: ['search', debouncedQuery, cityId, selectedType, activeCategory, activeCityId, activeVendorId],
         queryFn: async () => {
             const params: any = { cityId, search: debouncedQuery };
             if (selectedType !== 'all') params.type = selectedType;
-            if (selectedCategory) params.categoryId = selectedCategory;
-            if (selectedCityId) params.cityId = selectedCityId; // Override default cityId if selected in filter
-            if (selectedVendorId) params.vendorId = selectedVendorId;
+            if (activeCategory) params.categoryId = activeCategory;
+            if (activeCityId) params.cityId = activeCityId;
+            if (activeVendorId) params.vendorId = activeVendorId;
             const response = await api.get('/offers', { params });
             return response.data;
         },
-        enabled: !!debouncedQuery || !!selectedCategory || selectedType !== 'all' || !!selectedCityId || !!selectedVendorId,
+        enabled: !!debouncedQuery || !!activeCategory || selectedType !== 'all' || !!activeCityId || !!activeVendorId,
     });
 
     return (
@@ -147,7 +173,12 @@ export default function SearchScreen() {
                     <Box width={1} height={24} backgroundColor="gray" marginHorizontal="s" />
 
                     {/* Advanced Filter Button */}
-                    <TouchableOpacity onPress={() => setFilterModalVisible(true)}>
+                    <TouchableOpacity onPress={() => {
+                        setPendingCategory(activeCategory);
+                        setPendingCityId(activeCityId);
+                        setPendingVendorId(activeVendorId);
+                        setFilterModalVisible(true);
+                    }}>
                         <Box
                             marginRight="m"
                             paddingHorizontal="m"
@@ -161,7 +192,7 @@ export default function SearchScreen() {
                             gap="xs"
                         >
                             <Ionicons name="options-outline" size={20} color={theme.colors.text} />
-                            {(selectedCategory || selectedCityId || selectedVendorId) && (
+                            {(activeCategory || activeCityId || activeVendorId) && (
                                 <Box width={6} height={6} borderRadius={3} backgroundColor="primary" />
                             )}
                             <Text fontWeight="600" fontSize={14}>Filters</Text>
@@ -171,8 +202,11 @@ export default function SearchScreen() {
             </Box>
 
             {/* Results Area */}
-            <Box flex={1} width="100%">
-                {!query && !selectedCategory && selectedType === 'all' && !selectedCityId && !selectedVendorId ? (
+            <Box flex={1} width="100%" position="relative">
+                {/* Search Suggestions Overlay */}
+                <SearchSuggestions />
+
+                {!query && !activeCategory && selectedType === 'all' && !activeCityId && !activeVendorId ? (
                     <ScrollView contentContainerStyle={{ padding: 16 }}>
                         <Text variant="subheader" fontSize={18} marginBottom="m">Trending Searches</Text>
                         <Box flexDirection="row" flexWrap="wrap" gap="s">
@@ -233,22 +267,17 @@ export default function SearchScreen() {
                 visible={isFilterModalVisible}
                 onClose={() => setFilterModalVisible(false)}
                 categories={categories || []}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
+                selectedCategory={pendingCategory}
+                onSelectCategory={setPendingCategory}
                 cities={cities || []}
-                selectedCity={selectedCityId}
-                onSelectCity={handleSelectCity}
+                selectedCity={pendingCityId}
+                onSelectCity={handleSelectCityPending}
                 vendors={vendors || []}
-                selectedVendor={selectedVendorId}
-                onSelectVendor={setSelectedVendorId}
+                selectedVendor={pendingVendorId}
+                onSelectVendor={setPendingVendorId}
                 isVendorsLoading={isVendorsLoading}
-                onApply={() => setFilterModalVisible(false)}
-                onReset={() => {
-                    setSelectedCategory(null);
-                    setSelectedType('all');
-                    setSelectedCityId(null);
-                    setSelectedVendorId(null);
-                }}
+                onApply={handleApplyFilters}
+                onReset={handleResetFilters}
             />
         </Box>
     );
